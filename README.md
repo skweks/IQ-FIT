@@ -24,16 +24,7 @@ Backend	Spring Boot (Java)
 Database	MySQL / PostgreSQL (modify if different)
 Build Tools	Maven / npm
 Version Control	Git & GitHub
-📂 Project Structure
-project-root/
-│
-├── backend/            # Spring Boot backend API
-│   ├── src/main/java/
-│   └── pom.xml
-│
-└── frontend/           # React UI
-    ├── src/
-    └── package.json
+
 
 🚀 Getting Started
 1. Clone the repository
@@ -52,8 +43,8 @@ npm start
 👥 Team Members
 
 Member 1: Kent Rato (Frontend)
-Member 1: John Lloyd Maluto (Frontend - Backend)
-Member 1: Christian Jay Basinilio (Backend)
-Member 2: Name (Role)
 
-Member 3: Name (Role)
+Member 1: John Lloyd Maluto (Frontend - Backend)
+
+Member 1: Christian Jay Basinilio (Backend)
+
