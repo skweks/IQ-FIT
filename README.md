@@ -1,5 +1,4 @@
-🏋️ IQ-FIR
-
+🏋️ IQ-FIT
 A web application designed to help users build balanced habits. This tool provides customizable workout routines, a built-in exercise timer, and nutrition guidance including simple healthy recipes. It also offers study tips and productivity strategies to support a healthy mind and body.
 
 Built by a 3-member development team using React (frontend) and Spring Boot (backend).
