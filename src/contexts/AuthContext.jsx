@@ -20,14 +20,18 @@ export const AuthProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('iqfit_user');
-    const storedStats = localStorage.getItem('iqfit_stats');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    if (storedStats) {
-      setStats(JSON.parse(storedStats));
-    }
+if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+  const storedUser = localStorage.getItem("iqfit_user");
+  const storedStats = localStorage.getItem("iqfit_stats");
+
+  if (storedUser) {
+    setUser(JSON.parse(storedUser));
+  }
+  if (storedStats) {
+    setStats(JSON.parse(storedStats));
+  }
+}
+
     setIsLoading(false);
   }, []);
 
