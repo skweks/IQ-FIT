@@ -35,6 +35,17 @@ if (typeof window !== "undefined" && typeof window.localStorage !== "undefined")
     setIsLoading(false);
   }, []);
 
+  // --- NEW FUNCTION TO UPDATE USER PROFILE ---
+  const updateProfile = (profileData) => {
+    // 1. Update the user object
+    const updatedUser = { ...user, ...profileData };
+    setUser(updatedUser);
+    
+    // 2. Persist the updated user to localStorage
+    localStorage.setItem('iqfit_user', JSON.stringify(updatedUser));
+  };
+  // -------------------------------------------
+
   const login = async (email, password) => {
     setIsLoading(true);
     try {
@@ -118,6 +129,7 @@ if (typeof window !== "undefined" && typeof window.localStorage !== "undefined")
       logout,
       isLoading,
       stats,
+      updateProfile, // <-- EXPORTING NEW FUNCTION
       incrementWorkouts,
       incrementStudySessions,
       incrementRecipesTried

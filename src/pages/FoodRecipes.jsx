@@ -1,8 +1,16 @@
+import { useState } from 'react';
 import { ArrowLeft, UtensilsCrossed, Clock, Users, ChefHat, Leaf } from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
+// import { useAuth } from '../contexts/AuthContext'; // Not needed in this file yet
 
 export const FoodRecipes = () => {
   const navigate = useNavigate();
+  // const { incrementRecipesTried } = useAuth(); // Assuming this is done on the Recipe Detail page
+
+  // --- Pagination Setup ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const recipesPerPage = 3; // Set to 3 items per page for 2 pages
+  // --- End Pagination Setup ---
 
   const recipes = [
     {
@@ -86,6 +94,15 @@ export const FoodRecipes = () => {
   const getCategoryIcon = () => {
     return UtensilsCrossed;
   };
+  
+  // --- Pagination Logic ---
+  const totalPages = Math.ceil(recipes.length / recipesPerPage);
+  const indexOfLastRecipe = currentPage * recipesPerPage;
+  const indexOfFirstRecipe = indexOfLastRecipe - recipesPerPage;
+  const currentRecipes = recipes.slice(indexOfFirstRecipe, indexOfLastRecipe);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // --- End Pagination Logic ---
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-6">
@@ -127,18 +144,23 @@ export const FoodRecipes = () => {
             </div>
           </div>
         </div>
+        
+        {/* Card Layout with Pagination */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recipes.map((recipe) => {
+          {currentRecipes.map((recipe) => {
             const IconComponent = getCategoryIcon();
             return (
               <div
                 key={recipe.id}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden group"
+                // Card Alignment Fix: Added 'flex flex-col h-full'
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden group flex flex-col h-full"
               >
                 <div className="bg-gradient-to-br from-green-500 to-emerald-500 h-32 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <IconComponent className="w-16 h-16 text-white" />
                 </div>
-                <div className="p-6">
+                
+                {/* Card Body: Added 'flex flex-col flex-grow' to push content down */}
+                <div className="p-6 flex flex-col flex-grow">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-slate-900">{recipe.title}</h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(recipe.type)}`}>
@@ -176,7 +198,9 @@ export const FoodRecipes = () => {
                       ))}
                     </div>
                   </div>
-                  <button className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all">
+                  
+                  {/* Button Alignment Fix: Added 'mt-auto' to push button to the bottom */}
+                  <button className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all mt-auto">
                     View Recipe
                   </button>
                 </div>
@@ -184,6 +208,42 @@ export const FoodRecipes = () => {
             );
           })}
         </div>
+        
+        {/* Pagination UI Upgrade */}
+        <div className="flex justify-center items-center gap-2 mt-12">
+            <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-l-lg disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+                Previous
+            </button>
+            
+            {/* Page number button group */}
+            {Array.from({ length: totalPages }, (_, index) => (
+                <button
+                    key={index + 1}
+                    onClick={() => paginate(index + 1)}
+                    className={`px-4 py-2 text-sm font-medium transition-colors 
+                        ${currentPage === index + 1 
+                            ? 'bg-green-600 text-white shadow-md' // Highlight color for Food Recipes (Green)
+                            : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-300'
+                        }
+                    `}
+                >
+                    {index + 1}
+                </button>
+            ))}
+
+            <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-r-lg disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+                Next
+            </button>
+        </div>
+
         <div className="mt-12 bg-white rounded-2xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Nutrition Tips</h2>
           <div className="grid md:grid-cols-2 gap-6">
@@ -228,4 +288,4 @@ export const FoodRecipes = () => {
       </div>
     </div>
   );
-};
+}

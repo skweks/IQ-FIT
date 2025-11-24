@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowLeft, Dumbbell, Clock, Flame, Target } from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuth } from '../contexts/AuthContext';
@@ -5,6 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 export function WorkoutRoutine() {
   const navigate = useNavigate();
   const { incrementWorkouts } = useAuth();
+  
+  // --- Pagination Setup ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const workoutsPerPage = 6;
+  
 
   const workouts = [
     {
@@ -118,6 +124,15 @@ export function WorkoutRoutine() {
     }
   };
 
+  // --- Pagination Logic ---
+  const totalPages = Math.ceil(workouts.length / workoutsPerPage);
+  const indexOfLastWorkout = currentPage * workoutsPerPage;
+  const indexOfFirstWorkout = indexOfLastWorkout - workoutsPerPage;
+  const currentWorkouts = workouts.slice(indexOfFirstWorkout, indexOfLastWorkout);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-6">
       <div className="max-w-7xl mx-auto">
@@ -158,16 +173,20 @@ export function WorkoutRoutine() {
             </div>
           </div>
         </div>
+        
+        
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workouts.map((workout) => (
+          {currentWorkouts.map((workout) => (
             <div
               key={workout.id}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden group"
+              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden group flex flex-col h-full"
             >
               <div className="bg-gradient-to-br from-blue-500 to-cyan-500 h-32 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Dumbbell className="w-16 h-16 text-white" />
               </div>
-              <div className="p-6">
+              
+              
+              <div className="p-6 flex flex-col flex-grow"> 
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-bold text-slate-900">{workout.title}</h3>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(workout.difficulty)}`}>
@@ -201,8 +220,9 @@ export function WorkoutRoutine() {
                     ))}
                   </div>
                 </div>
+               
                 <button
-                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all mt-auto"
                   onClick={incrementWorkouts}
                 >
                   Start Workout
@@ -210,6 +230,41 @@ export function WorkoutRoutine() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Pagination UI */}
+        <div className="flex justify-center items-center gap-2 mt-12">
+            <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-l-lg disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+                Previous
+            </button>
+            
+            {/* Page number button group */}
+            {Array.from({ length: totalPages }, (_, index) => (
+                <button
+                    key={index + 1}
+                    onClick={() => paginate(index + 1)}
+                    className={`px-4 py-2 text-sm font-medium transition-colors 
+                        ${currentPage === index + 1 
+                            ? 'bg-blue-600 text-white shadow-md' 
+                            : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-300'
+                        }
+                    `}
+                >
+                    {index + 1}
+                </button>
+            ))}
+
+            <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-r-lg disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+                Next
+            </button>
         </div>
       </div>
     </div>

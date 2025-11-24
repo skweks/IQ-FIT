@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowLeft, BookOpen, Brain, Clock, Star, Lightbulb } from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuth } from '../contexts/AuthContext';
@@ -5,6 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 export function StudyTips() {
   const navigate = useNavigate();
   const { incrementStudySessions } = useAuth();
+
+  // --- Pagination Setup ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const tipsPerPage = 6;
+  // --- End Pagination Setup ---
 
   const tips = [
     {
@@ -101,6 +107,15 @@ export function StudyTips() {
     };
     return colors[category] || 'bg-slate-100 text-slate-700';
   };
+  
+  // --- Pagination Logic ---
+  const totalPages = Math.ceil(tips.length / tipsPerPage);
+  const indexOfLastTip = currentPage * tipsPerPage;
+  const indexOfFirstTip = indexOfLastTip - tipsPerPage;
+  const currentTips = tips.slice(indexOfFirstTip, indexOfLastTip);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // --- End Pagination Logic ---
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-6">
@@ -121,13 +136,16 @@ export function StudyTips() {
           </div>
           <p className="text-lg text-slate-600">Proven techniques to enhance your learning and retention</p>
         </div>
+        
+        {/* Card Layout with Pagination */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tips.map((tip) => {
+          {currentTips.map((tip) => {
             const IconComponent = tip.icon;
             return (
               <div
                 key={tip.id}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all p-6 group"
+                // Card Alignment Fix: Added 'flex flex-col h-full'
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all p-6 group flex flex-col h-full"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="bg-gradient-to-br from-cyan-500 to-blue-500 p-3 rounded-xl group-hover:scale-110 transition-transform">
@@ -137,30 +155,72 @@ export function StudyTips() {
                     {tip.category}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{tip.title}</h3>
-                <p className="text-slate-600 mb-4 leading-relaxed">{tip.description}</p>
-                <div className="border-t border-slate-200 pt-4">
-                  <p className="text-sm font-semibold text-slate-700 mb-2">Benefits:</p>
-                  <ul className="space-y-1">
-                    {tip.benefits.map((benefit, index) => (
-                      <li key={index} className="text-sm text-slate-600 flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
-                        {benefit}
-                      </li>
-                    ))}
-                  </ul>
+                
+                {/* Card Body: Added 'flex flex-col flex-grow' to push content down */}
+                <div className="flex flex-col flex-grow">
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{tip.title}</h3>
+                  <p className="text-slate-600 mb-4 leading-relaxed">{tip.description}</p>
+                  
+                  {/* Added mt-auto to separate this block and allow button to align */}
+                  <div className="border-t border-slate-200 pt-4 mt-auto">
+                    <p className="text-sm font-semibold text-slate-700 mb-2">Benefits:</p>
+                    <ul className="space-y-1">
+                      {tip.benefits.map((benefit, index) => (
+                        <li key={index} className="text-sm text-slate-600 flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  {/* Button Alignment Fix: Added 'mt-4' for spacing and 'mt-auto' (already included in container) */}
+                  <button
+                    className="w-full mt-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+                    onClick={incrementStudySessions}
+                  >
+                    Learn More
+                  </button>
                 </div>
-                <button
-                  className="w-full mt-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all"
-                  onClick={incrementStudySessions}
-                >
-                  Learn More
-                </button>
               </div>
             );
           })}
         </div>
-        {/* ... (Quick tips and progress section unchanged; expand if needed) ... */}
+        
+        {/* Pagination UI Upgrade */}
+        <div className="flex justify-center items-center gap-2 mt-12">
+            <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-l-lg disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+                Previous
+            </button>
+            
+            {/* Page number button group */}
+            {Array.from({ length: totalPages }, (_, index) => (
+                <button
+                    key={index + 1}
+                    onClick={() => paginate(index + 1)}
+                    className={`px-4 py-2 text-sm font-medium transition-colors 
+                        ${currentPage === index + 1 
+                            ? 'bg-cyan-600 text-white shadow-md' // Highlight color for Study Tips (Cyan)
+                            : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-300'
+                        }
+                    `}
+                >
+                    {index + 1}
+                </button>
+            ))}
+
+            <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-r-lg disabled:opacity-50 hover:bg-slate-100 transition-colors"
+            >
+                Next
+            </button>
+        </div>
       </div>
     </div>
   );

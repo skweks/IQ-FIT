@@ -1,17 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, User, Mail, FileText, Save } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '../hooks/useNavigate';
 
 export function UserProfile() {
-  const { user } = useAuth();
+  // Pull user and updateProfile function from the global context
+  const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
+  
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [bio, setBio] = useState(user?.bio || '');
 
+  // Initialize local form state whenever the user object changes (e.g., after login)
+  useEffect(() => {
+    if (user) {
+      setFullName(user.fullName || '');
+      setEmail(user.email || '');
+      setBio(user.bio || '');
+    }
+  }, [user]);
+
+
   const handleSave = () => {
+    // 1. Validate data (simple validation)
+    if (!fullName || !email) {
+      alert('Full Name and Email are required.'); // Using simple alert for brevity, recommend custom modal.
+      return;
+    }
+
+    // 2. Prepare the data to send to the context/backend
+    const newProfileData = {
+      fullName,
+      email,
+      bio,
+    };
+
+    // 3. Update the global context state and localStorage
+    updateProfile(newProfileData);
+
+    // 4. Exit editing mode
     setIsEditing(false);
   };
 
@@ -38,11 +67,12 @@ export function UserProfile() {
           <div className="bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-12 text-white">
             <div className="flex items-center gap-6">
               <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl font-bold">
-                {getInitials(fullName)}
+                {getInitials(user?.fullName || '')}
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-2">{fullName}</h1>
-                <p className="text-blue-100">{email}</p>
+                {/* Displaying directly from context user to ensure immediate reflection */}
+                <h1 className="text-3xl font-bold mb-2">{user?.fullName}</h1> 
+                <p className="text-blue-100">{user?.email}</p>
               </div>
             </div>
           </div>
@@ -59,7 +89,13 @@ export function UserProfile() {
               ) : (
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      // Reset local state back to current context user data on Cancel
+                      setFullName(user.fullName || '');
+                      setEmail(user.email || '');
+                      setBio(user.bio || '');
+                      setIsEditing(false);
+                    }}
                     className="px-6 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition-colors"
                   >
                     Cancel
@@ -88,7 +124,7 @@ export function UserProfile() {
                     className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                   />
                 ) : (
-                  <p className="text-lg text-slate-900 bg-slate-50 px-4 py-3 rounded-lg">{fullName}</p>
+                  <p className="text-lg text-slate-900 bg-slate-50 px-4 py-3 rounded-lg">{user?.fullName}</p>
                 )}
               </div>
               <div>
@@ -104,7 +140,7 @@ export function UserProfile() {
                     className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                   />
                 ) : (
-                  <p className="text-lg text-slate-900 bg-slate-50 px-4 py-3 rounded-lg">{email}</p>
+                  <p className="text-lg text-slate-900 bg-slate-50 px-4 py-3 rounded-lg">{user?.email}</p>
                 )}
               </div>
               <div>
@@ -122,7 +158,7 @@ export function UserProfile() {
                   />
                 ) : (
                   <p className="text-lg text-slate-900 bg-slate-50 px-4 py-3 rounded-lg min-h-[100px]">
-                    {bio || 'No bio added yet.'}
+                    {user?.bio || 'No bio added yet.'}
                   </p>
                 )}
               </div>
