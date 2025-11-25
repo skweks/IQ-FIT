@@ -5,7 +5,8 @@ import { LandingPage } from './pages/LandingPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './pages/LoginPage';
 import { Dashboard } from './pages/Dashboard';
-import { UserProfile } from './pages/UserProfile';
+// FIX: Importing UserProfile using named import
+import { UserProfile } from './pages/UserProfile'; 
 import { WorkoutRoutine } from './pages/WorkoutRoutine';
 import { StudyTips } from './pages/StudyTips';
 import { FoodRecipes } from './pages/FoodRecipes';

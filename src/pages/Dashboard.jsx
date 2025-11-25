@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dumbbell, Home, Sparkles, Info, Mail, User, LogOut, Menu, X, Target, Brain, Heart, Phone } from 'lucide-react';
+import { Dumbbell, Home, Sparkles, Info, Mail, User, LogOut, Menu, X, Brain, UtensilsCrossed, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '../hooks/useNavigate';
 
@@ -31,6 +31,28 @@ export function Dashboard() {
   const workouts = stats?.workouts || 0;
   const studySessions = stats?.studySessions || 0;
   const recipesTried = stats?.recipesTried || 0;
+  
+  // --- ACTIVE ROUTINE CHECK (Mock: Check if they are in a specific page) ---
+  // In a real app, this would check a persistent state for an active session.
+  const activeRoute = window.location.pathname.substring(1);
+  let activeActivity = null;
+  let activeTitle = null;
+  let activePath = null;
+
+  if (activeRoute === 'workouts') {
+      activeActivity = <Dumbbell className="w-8 h-8" />;
+      activeTitle = "Workout Routine";
+      activePath = "/workouts";
+  } else if (activeRoute === 'study-tips') {
+      activeActivity = <Brain className="w-8 h-8" />;
+      activeTitle = "Study Session";
+      activePath = "/study-tips";
+  } else if (activeRoute === 'recipes') {
+      activeActivity = <UtensilsCrossed className="w-8 h-8" />;
+      activeTitle = "Recipe Cookthrough";
+      activePath = "/recipes";
+  }
+  // --------------------------------------------------------------------------
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -163,6 +185,31 @@ export function Dashboard() {
             </h1>
             <p className="text-xl text-slate-600">Ready to continue your transformation journey?</p>
           </div>
+          
+          {/* Active Routine Card (New Dashboard Fix) */}
+          {activePath && (
+              <div className="max-w-5xl mx-auto mb-12">
+                  <div className="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-red-500 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                          <div className="p-3 bg-red-100 rounded-lg text-red-600">
+                              {activeActivity}
+                          </div>
+                          <div>
+                              <p className="text-lg font-semibold text-slate-900">Activity in Progress</p>
+                              <p className="text-sm text-slate-600">You are currently in the middle of a {activeTitle}.</p>
+                          </div>
+                      </div>
+                      <button 
+                          onClick={() => navigate(activePath)}
+                          className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+                      >
+                          Resume <ArrowRight className="w-4 h-4"/>
+                      </button>
+                  </div>
+              </div>
+          )}
+          {/* End Active Routine Card */}
+          
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             <button
               onClick={() => navigate('/workouts')}
@@ -179,9 +226,7 @@ export function Dashboard() {
               className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all text-left group"
             >
               <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+                <Brain className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Study Tips</h3>
               <p className="text-slate-600">Enhance your learning with proven techniques</p>
@@ -191,9 +236,7 @@ export function Dashboard() {
               className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all text-left group"
             >
               <div className="bg-gradient-to-br from-green-500 to-green-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+                <UtensilsCrossed className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Food Recipes</h3>
               <p className="text-slate-600">Discover healthy and delicious meal ideas</p>
@@ -209,23 +252,23 @@ export function Dashboard() {
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl">
               <h3 className="text-lg font-semibold text-slate-700 mb-2">Workouts Completed</h3>
               <p className="text-4xl font-bold text-blue-600">{workouts}</p>
-              <p className="text-sm text-slate-600 mt-2">This month</p>
+              <p className="text-sm text-slate-600 mt-2">Total tracked completions</p>
             </div>
             <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-8 rounded-2xl">
               <h3 className="text-lg font-semibold text-slate-700 mb-2">Study Sessions</h3>
               <p className="text-4xl font-bold text-cyan-600">{studySessions}</p>
-              <p className="text-sm text-slate-600 mt-2">This month</p>
+              <p className="text-sm text-slate-600 mt-2">Total tracked completions</p>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-2xl">
               <h3 className="text-lg font-semibold text-slate-700 mb-2">Recipes Tried</h3>
               <p className="text-4xl font-bold text-green-600">{recipesTried}</p>
-              <p className="text-sm text-slate-600 mt-2">This month</p>
+              <p className="text-sm text-slate-600 mt-2">Total tracked completions</p>
             </div>
           </div>
         </div>
       </section>
       
-      {/* About Section */}
+      {/* About Section (unchanged) */}
       <section id="about" className="py-20 px-6 bg-slate-50">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div>
@@ -250,18 +293,18 @@ export function Dashboard() {
               </li>
               <li className="flex items-center gap-3">
                 <User className="w-5 h-5 text-cyan-500" />
-                <span className="font-medium">John Lloyd Maluto</span> (Frontend / Backend)
+                <span className="font-medium">John Lloyd Maluto</span> (Frontend / Backend) 
               </li>
               <li className="flex items-center gap-3">
                 <User className="w-5 h-5 text-green-500" />
-                <span className="font-medium">Christian Jay Basinilio</span> (Backend)
+                <span className="font-medium">Christian Jay Basinilio</span> (Backend) 
               </li>
             </ul>
           </div>
         </div>
       </section>
 
-      {/* Contact Section */}
+      {/* Contact Section (unchanged) */}
       <section id="contact" className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl font-bold text-slate-900 mb-4 text-center">Get in Touch</h2>
@@ -294,7 +337,7 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer (unchanged) */}
       <footer className="bg-slate-800 text-white py-8 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm">&copy; {new Date().getFullYear()} IQ-FIT. All rights reserved.</p>
