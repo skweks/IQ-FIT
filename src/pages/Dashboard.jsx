@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dumbbell, Home, Sparkles, Info, Mail, User, LogOut, Menu, X, Brain, UtensilsCrossed, ArrowRight } from 'lucide-react';
+import { Dumbbell, Home, Sparkles, Info, Mail, User, LogOut, Menu, X, Brain, UtensilsCrossed, ArrowRight, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '../hooks/useNavigate';
 
@@ -20,11 +20,11 @@ export function Dashboard() {
 
   const getInitials = (name) => {
     return name
-      .split(' ')
+      ?.split(' ')
       .map(n => n[0])
       .join('')
       .toUpperCase()
-      .slice(0, 2);
+      .slice(0, 2) || 'U';
   };
 
   // Default to zero for new users
@@ -32,8 +32,7 @@ export function Dashboard() {
   const studySessions = stats?.studySessions || 0;
   const recipesTried = stats?.recipesTried || 0;
   
-  // --- ACTIVE ROUTINE CHECK (Mock: Check if they are in a specific page) ---
-  // In a real app, this would check a persistent state for an active session.
+  // --- ACTIVE ROUTINE CHECK ---
   const activeRoute = window.location.pathname.substring(1);
   let activeActivity = null;
   let activeTitle = null;
@@ -52,7 +51,6 @@ export function Dashboard() {
       activeTitle = "Recipe Cookthrough";
       activePath = "/recipes";
   }
-  // --------------------------------------------------------------------------
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -109,13 +107,30 @@ export function Dashboard() {
 
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
-                  <div className="bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-5 text-white">
-                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl font-bold mb-3 mx-auto">
+                  <div className="bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-5 text-white flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl font-bold mb-3">
                       {getInitials(user?.fullName || 'User')}
                     </div>
                     <h3 className="font-semibold text-lg text-center">{user?.fullName}</h3>
-                    <p className="text-blue-100 text-sm text-center">{user?.email}</p>
+                    <p className="text-blue-100 text-sm text-center mb-3">{user?.email}</p>
+                    
+                    {/* NEW: Plan Status Badge */}
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm ${
+                        user?.isPremium 
+                        ? 'bg-amber-400 text-amber-950' 
+                        : 'bg-white/20 text-white border border-white/30'
+                    }`}>
+                        {user?.isPremium ? (
+                            <>
+                                <Crown className="w-3 h-3 fill-current" />
+                                PREMIUM MEMBER
+                            </>
+                        ) : (
+                            "FREE PLAN"
+                        )}
+                    </div>
                   </div>
+                  
                   <div className="py-2">
                     <button
                       onClick={() => {
@@ -144,9 +159,7 @@ export function Dashboard() {
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center gap-3 text-slate-700"
                     >
-                      <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
+                      <Brain className="w-5 h-5 text-slate-500" />
                       <span className="font-medium">Study Tips</span>
                     </button>
                     <button
@@ -156,9 +169,7 @@ export function Dashboard() {
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center gap-3 text-slate-700"
                     >
-                      <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
+                      <UtensilsCrossed className="w-5 h-5 text-slate-500" />
                       <span className="font-medium">Food Recipes</span>
                     </button>
                     <div className="border-t border-slate-200 my-2"></div>
@@ -186,7 +197,7 @@ export function Dashboard() {
             <p className="text-xl text-slate-600">Ready to continue your transformation journey?</p>
           </div>
           
-          {/* Active Routine Card (New Dashboard Fix) */}
+          {/* Active Routine Card */}
           {activePath && (
               <div className="max-w-5xl mx-auto mb-12">
                   <div className="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-red-500 flex items-center justify-between">
@@ -268,7 +279,7 @@ export function Dashboard() {
         </div>
       </section>
       
-      {/* About Section (unchanged) */}
+      {/* About Section */}
       <section id="about" className="py-20 px-6 bg-slate-50">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div>
@@ -304,7 +315,7 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* Contact Section (unchanged) */}
+      {/* Contact Section */}
       <section id="contact" className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl font-bold text-slate-900 mb-4 text-center">Get in Touch</h2>
@@ -337,7 +348,7 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* Footer (unchanged) */}
+      {/* Footer */}
       <footer className="bg-slate-800 text-white py-8 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm">&copy; {new Date().getFullYear()} IQ-FIT. All rights reserved.</p>

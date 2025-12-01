@@ -1,15 +1,13 @@
 package jar.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import jar.model.Content;
 import jar.repository.ContentRepository;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/content") // URL: http://localhost:8080/api/content
+@RequestMapping("/api/content")
 @CrossOrigin(origins = "http://localhost:3000")
 public class ContentController {
 
@@ -28,9 +26,15 @@ public class ContentController {
         return contentRepository.save(content);
     }
     
-    // 3. Search by type (e.g., /api/content/search?type=WORKOUT)
+    // 3. Search by type
     @GetMapping("/search")
     public List<Content> searchByType(@RequestParam String type) {
         return contentRepository.findByContentType(type);
+    }
+
+    // 4. DELETE CONTENT (New Feature!)
+    @DeleteMapping("/{id}")
+    public void deleteContent(@PathVariable Long id) {
+        contentRepository.deleteById(id);
     }
 }

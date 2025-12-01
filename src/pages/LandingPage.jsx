@@ -161,7 +161,7 @@ export function LandingPage() {
               </li>
               <li className="flex items-center gap-3">
                 <User className="w-5 h-5 text-green-500" />
-                <span className="font-medium">Christian Jay Basinilio</span> (Backend)
+                <span className="font-medium">Christian Jay Basinillo</span> (Backend)
               </li>
             </ul>
           </div>

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Dumbbell, Mail, Lock } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '../hooks/useNavigate';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuth();
+  
+  const [isLoading, setIsLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -19,11 +20,51 @@ export function LoginPage() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      // 1. Send Login Request to Spring Boot Backend
+      const response = await fetch('http://localhost:8080/api/users/login', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+          const userData = await response.json();
+          
+          // 2. Save user data
+          localStorage.setItem('iqfit_user', JSON.stringify(userData));
+          
+          // Initialize stats if they don't exist
+          if (!localStorage.getItem('iqfit_stats')) {
+             localStorage.setItem('iqfit_stats', JSON.stringify({
+                workouts: 0,
+                studySessions: 0,
+                recipesTried: 0
+             }));
+          }
+
+          console.log("Login Successful. Redirecting based on role:", userData.role);
+
+          // 3. SMART REDIRECT LOGIC
+          if (userData.role === 'ADMIN') {
+              window.location.href = '/admin'; // Redirects to Admin Dashboard
+          } else {
+              window.location.href = '/dashboard'; // Redirects to User Dashboard
+          }
+
+      } else {
+          setError('Invalid email or password');
+      }
+
     } catch (err) {
-      setError('Invalid email or password');
+      console.error("Login Error:", err);
+      setError('Network error. Check if backend is running.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

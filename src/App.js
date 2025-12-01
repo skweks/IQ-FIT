@@ -5,11 +5,14 @@ import { LandingPage } from './pages/LandingPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './pages/LoginPage';
 import { Dashboard } from './pages/Dashboard';
-// FIX: Importing UserProfile using named import
 import { UserProfile } from './pages/UserProfile'; 
 import { WorkoutRoutine } from './pages/WorkoutRoutine';
 import { StudyTips } from './pages/StudyTips';
 import { FoodRecipes } from './pages/FoodRecipes';
+import Plans from './pages/Plans';  // <--- 1. Import is kept here
+import { AdminDashboard } from './pages/AdminDashboard';
+
+// We deleted the first "function App()" that was here.
 
 function AppContent() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -31,6 +34,7 @@ function AppContent() {
     );
   }
 
+  // Redirect logic: If not logged in and trying to access protected pages
   if (!user && currentPath !== '/' && currentPath !== '/login' && currentPath !== '/register') {
     window.history.pushState({}, '', '/login');
     return <LoginPage />;
@@ -53,11 +57,20 @@ function AppContent() {
       return user ? <StudyTips /> : <LoginPage />;
     case '/recipes':
       return user ? <FoodRecipes /> : <LoginPage />;
+    // 2. Add this case inside the switch(currentPath) block:
+    case '/admin':
+      return user?.role === 'ADMIN' ? <AdminDashboard /> : <Dashboard />;
+      
+    // 2. Add the new Case for Plans here
+    case '/plans':
+      return user ? <Plans /> : <LoginPage />;
+
     default:
       return user ? <Dashboard /> : <LandingPage />;
   }
 }
 
+// 3. This is the ONLY export default allowed
 export default function App() {
   return (
     <AuthProvider>
