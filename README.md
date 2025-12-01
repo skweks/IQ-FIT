@@ -46,5 +46,5 @@ Member 1: Kent Rato (Frontend)
 
 Member 1: John Lloyd Maluto (Frontend - Backend)
 
-Member 1: Christian Jay Basinilio (Backend)
+Member 1: Christian Jay Basinillo (Backend)
 
