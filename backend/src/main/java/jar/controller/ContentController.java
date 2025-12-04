@@ -14,27 +14,46 @@ public class ContentController {
     @Autowired
     private ContentRepository contentRepository;
 
-    // 1. Get all content
     @GetMapping
     public List<Content> getAllContent() {
         return contentRepository.findAll();
     }
 
-    // 2. Add new content (Workout, Tip, etc.)
     @PostMapping
     public Content addContent(@RequestBody Content content) {
         return contentRepository.save(content);
     }
     
-    // 3. Search by type
     @GetMapping("/search")
     public List<Content> searchByType(@RequestParam String type) {
         return contentRepository.findByContentType(type);
     }
 
-    // 4. DELETE CONTENT (New Feature!)
     @DeleteMapping("/{id}")
     public void deleteContent(@PathVariable Long id) {
         contentRepository.deleteById(id);
+    }
+
+    // --- NEW: EDIT CONTENT ---
+    @PutMapping("/{id}")
+    public Content updateContent(@PathVariable Long id, @RequestBody Content contentDetails) {
+        Content content = contentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Content not found"));
+
+        content.setTitle(contentDetails.getTitle());
+        content.setDescription(contentDetails.getDescription());
+        content.setContentType(contentDetails.getContentType());
+        content.setCategory(contentDetails.getCategory());
+        content.setDifficultyLevel(contentDetails.getDifficultyLevel());
+        content.setAccessLevel(contentDetails.getAccessLevel());
+        content.setDurationMinutes(contentDetails.getDurationMinutes());
+        content.setVideoUrl(contentDetails.getVideoUrl());
+        
+        // Update Set/Rep logic
+        content.setSets(contentDetails.getSets());
+        content.setReps(contentDetails.getReps());
+        content.setRestTimeSeconds(contentDetails.getRestTimeSeconds());
+
+        return contentRepository.save(content);
     }
 }

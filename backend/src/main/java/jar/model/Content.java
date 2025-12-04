@@ -15,25 +15,21 @@ public class Content {
 
     private String title;
 
-    @Column(columnDefinition = "TEXT") // Allows longer text for descriptions
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Stores values like: WORKOUT, STUDY_TIP, VIDEO, ARTICLE
-    private String contentType; 
-
-    // Stores tags like: Cardio, Focus, Nutrition
+    private String contentType; // WORKOUT, STUDY_TIP, RECIPE
     private String category; 
-
-    // Stores: BEGINNER, INTERMEDIATE, ADVANCED
     private String difficultyLevel; 
-
-    // Use Integer (not int) so it can be null for text-only tips
+    private String accessLevel; 
     private Integer durationMinutes; 
-
     private String videoUrl;
 
-    // Stores: FREE, PREMIUM
-    private String accessLevel; 
+    // --- NEW FIELDS FOR YOUR NEW LOGIC ---
+    private Integer sets;           // e.g., 3
+    private String reps;            // e.g., "12" or "8-10"
+    private Integer restTimeSeconds; // e.g., 20
+    // -------------------------------------
 
     private LocalDate uploadDate;
 

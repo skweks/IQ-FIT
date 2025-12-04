@@ -35,7 +35,12 @@ public class User {
     private boolean suspended = false;
 
     @Column(columnDefinition = "TEXT")
-    private String bio; 
+    private String bio;
+    
+  
+    private Double weight; // in kg
+    private Double height; // in cm
+    // ------------------
 
     private LocalDate joinDate;
 
