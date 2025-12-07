@@ -10,15 +10,18 @@ import { useNavigate } from '../hooks/useNavigate';
 
 export function Dashboard() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const { user, logout, stats } = useAuth();
+  const { user, logout } = useAuth(); // Removed 'stats' from context, we use local state here
   const navigate = useNavigate();
+
+  // --- DB STATS STATE ---
+  const [dbStats, setDbStats] = useState({ workouts: 0, studySessions: 0, recipesTried: 0 });
 
   // --- CONTACT FORM STATE ---
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [isSending, setIsSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Pre-fill form with user data when loaded
+  // Pre-fill form & Fetch Stats
   useEffect(() => {
     if (user) {
         setContactForm(prev => ({
@@ -26,6 +29,12 @@ export function Dashboard() {
             name: user.fullName || '',
             email: user.email || ''
         }));
+
+        // FETCH REAL LIFETIME STATS FROM DATABASE
+        fetch(`http://localhost:8080/api/users/${user.id}/stats`)
+            .then(res => res.json())
+            .then(data => setDbStats(data))
+            .catch(err => console.error("Failed to load stats", err));
     }
   }, [user]);
 
@@ -55,7 +64,7 @@ export function Dashboard() {
 
           if (response.ok) {
               setShowSuccess(true);
-              setContactForm(prev => ({ ...prev, message: '' })); // Clear message only
+              setContactForm(prev => ({ ...prev, message: '' })); 
           } else {
               alert("Failed to send message.");
           }
@@ -66,11 +75,6 @@ export function Dashboard() {
           setIsSending(false);
       }
   };
-
-  // --- TOTAL STATS LOGIC ---
-  const totalWorkouts = stats?.workouts || 0;
-  const totalStudy = stats?.studySessions || 0;
-  const totalRecipes = stats?.recipesTried || 0;
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -352,9 +356,9 @@ export function Dashboard() {
           
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
             {[
-                { label: 'Total Workouts', value: totalWorkouts, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', icon: Trophy, sub: 'Sessions Crushed' },
-                { label: 'Study Sessions', value: totalStudy, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', icon: Brain, sub: 'Focus Hours' },
-                { label: 'Recipes Cooked', value: totalRecipes, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100', icon: UtensilsCrossed, sub: 'Healthy Meals' },
+                { label: 'Total Workouts', value: dbStats.workouts, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', icon: Trophy, sub: 'Sessions Crushed' },
+                { label: 'Study Sessions', value: dbStats.studySessions, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', icon: Brain, sub: 'Focus Hours' },
+                { label: 'Recipes Cooked', value: dbStats.recipesTried, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100', icon: UtensilsCrossed, sub: 'Healthy Meals' },
             ].map((stat, idx) => (
                 <div key={idx} className={`flex flex-col items-center p-8 ${stat.bg} rounded-3xl border ${stat.border} relative overflow-hidden group hover:shadow-md transition-shadow`}>
                     <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500">
@@ -373,7 +377,7 @@ export function Dashboard() {
           <div className="mt-12 text-center">
              <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 rounded-full text-slate-500 text-xs font-bold uppercase tracking-wide">
                 <Calendar className="w-3 h-3" />
-                Data updates automatically
+                Stats synchronized with secure database
              </div>
           </div>
         </div>
@@ -451,7 +455,7 @@ export function Dashboard() {
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Name</label>
                     <input 
                         type="text" 
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium" 
+                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium" 
                         placeholder="John Doe"
                         value={contactForm.name}
                         onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
@@ -461,7 +465,7 @@ export function Dashboard() {
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Email</label>
                     <input 
                         type="email" 
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium" 
+                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium" 
                         placeholder="john@example.com" 
                         value={contactForm.email}
                         onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
@@ -472,7 +476,7 @@ export function Dashboard() {
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Message</label>
                 <textarea 
                     rows="4" 
-                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none font-medium" 
+                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all resize-none font-medium" 
                     placeholder="How can we help you?"
                     value={contactForm.message}
                     onChange={(e) => setContactForm({...contactForm, message: e.target.value})}

@@ -15,4 +15,7 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     
     // Find all completed items for a user
     List<ActivityLog> findByUserIdAndStatus(Long userId, String status);
+
+    // --- NEW: Count logic for Dashboard Stats ---
+    long countByUserIdAndStatusAndContentContentType(Long userId, String status, String contentType);
 }

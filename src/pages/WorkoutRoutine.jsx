@@ -228,7 +228,7 @@ export function WorkoutRoutine() {
     const [selectedPlaylist, setSelectedPlaylist] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('ALL');
-    const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL', 'COMPLETED', 'INCOMPLETE'
+    const [statusFilter, setStatusFilter] = useState('ALL');
     
     // Custom Routine State
     const [isCreating, setIsCreating] = useState(false);
@@ -241,11 +241,12 @@ export function WorkoutRoutine() {
     // Stats
     const [completedIds, setCompletedIds] = useState([]);
 
-    const CATEGORIES = ['ALL', 'PUSH', 'PULL', 'LEGS', 'ARMS', 'CORE', 'CARDIO'];
+    const CATEGORIES = ['ALL', 'FULL BODY', 'PUSH', 'PULL', 'LEGS', 'CHEST', 'ARMS', 'CORE', 'CARDIO'];
 
     useEffect(() => {
         if (!user) return;
 
+        // Load Daily Progress (Local)
         const storageKey = `iqfit_daily_progress_${user.id}`;
         const savedData = JSON.parse(localStorage.getItem(storageKey) || '{}');
         const today = new Date().toDateString();
@@ -295,15 +296,37 @@ export function WorkoutRoutine() {
         setIsCreating(true);
     };
 
-    const handleWorkoutComplete = () => {
+    const handleWorkoutComplete = async () => {
+        // 1. Update Context (Local)
         incrementWorkouts(); 
+        
+        // 2. Update Daily Local Stats
         if (selectedPlaylist && user) {
             const ids = selectedPlaylist.map(w => w.id);
             const newCompleted = [...new Set([...completedIds, ...ids])];
             setCompletedIds(newCompleted);
+            
             const today = new Date().toDateString();
             const storageKey = `iqfit_daily_progress_${user.id}`;
             localStorage.setItem(storageKey, JSON.stringify({ date: today, ids: newCompleted }));
+            
+            // 3. NEW: SAVE TO DATABASE (LIFETIME STATS)
+            // Loop through completed items and send to backend
+            for (const workout of selectedPlaylist) {
+                 try {
+                     await fetch('http://localhost:8080/api/activity', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({
+                             userId: user.id,
+                             contentId: workout.id,
+                             status: 'COMPLETED'
+                         })
+                     });
+                 } catch (e) {
+                     console.error("Failed to log activity to DB:", e);
+                 }
+            }
         }
         setSelectedPlaylist(null);
     };
@@ -476,14 +499,14 @@ export function WorkoutRoutine() {
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                         <div className="flex items-center gap-3 mb-1">
                             <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Trophy className="w-5 h-5" /></div>
-                            <p className="text-sm font-bold text-slate-500 uppercase">Completed</p>
+                            <p className="text-sm font-bold text-slate-500 uppercase">Today's Completed</p>
                         </div>
                         <p className="text-2xl font-black text-slate-800">{totalCompleted} <span className="text-xs font-medium text-slate-400">Sessions</span></p>
                     </div>
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                         <div className="flex items-center gap-3 mb-1">
                             <div className="p-2 bg-orange-100 text-orange-600 rounded-lg"><Flame className="w-5 h-5" /></div>
-                            <p className="text-sm font-bold text-slate-500 uppercase">Burned</p>
+                            <p className="text-sm font-bold text-slate-500 uppercase">Today's Burned</p>
                         </div>
                         <p className="text-2xl font-black text-slate-800">{estimatedCalories} <span className="text-xs font-medium text-slate-400">Kcal</span></p>
                     </div>
@@ -620,8 +643,8 @@ export function WorkoutRoutine() {
                         }) : (
                             <div className="w-full text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 flex flex-col items-center justify-center min-w-[300px]">
                                 <Dumbbell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                <p className="text-slate-500 font-medium">No exercises found.</p>
-                                <p className="text-slate-400 text-xs mt-1">Try changing the filter or category.</p>
+                                <p className="text-slate-500 font-medium">No exercises found for "{selectedCategory}"</p>
+                                <button onClick={() => setSelectedCategory('ALL')} className="text-blue-600 font-bold text-sm mt-2 hover:underline">View All</button>
                             </div>
                         )}
                     </div>
