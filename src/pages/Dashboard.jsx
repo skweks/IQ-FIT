@@ -3,7 +3,8 @@ import {
   Dumbbell, Home, Sparkles, Info, Mail, User, LogOut, Menu, X, Brain, 
   UtensilsCrossed, ArrowRight, Crown, Trophy, Calendar, Activity, 
   ChevronRight, Zap, TrendingUp, Award, Heart, Code, Database, Server, 
-  Send, CheckCircle, Globe, Phone
+  Send, CheckCircle, Globe, Phone,
+  Shield // 1. Import Shield icon
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '../hooks/useNavigate';
@@ -254,6 +255,31 @@ export function Dashboard() {
             Track your fitness, sharpen your mind, and fuel your body. Your personalized holistic journey continues here.
           </p>
         </div>
+
+        {/* 2. ADMIN DASHBOARD LINK (NEW BLOCK FOR ADMINS ONLY) */}
+        {user?.role === 'ADMIN' && (
+            <div className="max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+                <div className="bg-white p-4 rounded-3xl shadow-xl shadow-red-900/5 border border-red-200 hover:shadow-2xl transition-shadow">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-red-600 text-white">
+                                <Shield className="w-6 h-6" />
+                            </div>
+                            <div className="text-center sm:text-left">
+                                <h3 className="text-lg font-bold text-slate-900 mb-1">Administrator Access</h3>
+                                <p className="text-slate-500 text-sm">You are logged in as an Admin. Click here to manage users and content.</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => navigate('/admin')}
+                            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-pink-600"
+                        >
+                            Admin Panel <ArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {/* Active Session Card */}
         {activePath && (

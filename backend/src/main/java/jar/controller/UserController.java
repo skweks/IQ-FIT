@@ -8,6 +8,7 @@ import jar.model.User;
 import jar.repository.UserRepository;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -44,8 +45,9 @@ public class UserController {
         }
 
         // DEBUG: Check passwords
-        // System.out.println("   DB Password:    " + user.getPassword()); // Uncomment for debugging
-        
+        // System.out.println(" DB Password: " + user.getPassword()); // Uncomment for
+        // debugging
+
         // Check if user exists AND if the password matches
         if (user.getPassword().equals(loginRequest.getPassword())) {
             System.out.println("✅ Password Matches! Login Success.");
@@ -66,7 +68,7 @@ public class UserController {
     @PutMapping("/{id}/suspend")
     public User toggleSuspendUser(@PathVariable Long id) {
         User user = userRepository.findById(id).orElseThrow();
-        user.setSuspended(!user.isSuspended()); 
+        user.setSuspended(!user.isSuspended());
         return userRepository.save(user);
     }
 
@@ -74,7 +76,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Update Personal Details
         user.setFullName(userDetails.getFullName());
@@ -96,5 +98,30 @@ public class UserController {
 
         User updatedUser = userRepository.save(user);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PutMapping("/{id}/role")
+    public ResponseEntity<User> updateRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        String newRole = request.get("role");
+        return userRepository.findById(id).map(user -> {
+            user.setRole(newRole);
+            User updatedUser = userRepository.save(user);
+            return ResponseEntity.ok(updatedUser);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // Endpoint to update a user's premium status
+    @PutMapping("/{id}/premium")
+    public ResponseEntity<User> updatePremiumStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> request) {
+        Boolean isPremium = request.get("isPremium");
+        return userRepository.findById(id).map(user -> {
+            user.setPremium(isPremium);
+
+            // Log the change for audit purposes (optional, but good practice)
+            System.out.println("Admin updated user " + id + " premium status to: " + isPremium);
+
+            User updatedUser = userRepository.save(user);
+            return ResponseEntity.ok(updatedUser);
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

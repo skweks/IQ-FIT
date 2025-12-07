@@ -49,15 +49,29 @@ if (typeof window !== "undefined" && typeof window.localStorage !== "undefined")
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const mockUser = {
-        id: '1',
-        email,
-        fullName: 'John Doe',
-        bio: 'Fitness enthusiast and lifelong learner'
-      };
-      setUser(mockUser);
-      localStorage.setItem('iqfit_user', JSON.stringify(mockUser));
+      // 1. Call the backend login API
+      const response = await fetch('http://localhost:8080/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!response.ok) {
+        // Handle 401 Unauthorized or other errors from the backend
+        const errorText = await response.text();
+        throw new Error(errorText || 'Login failed: Invalid credentials');
+      }
+
+      const userData = await response.json();
+      
+      // The backend response should contain the full user object including 'isPremium' and 'role'
+      setUser(userData);
+      localStorage.setItem('iqfit_user', JSON.stringify(userData));
+
+    } catch (error) {
+      console.error("Login failed:", error);
+      // Re-throw the error so the UI (LoginPage) can handle it
+      throw error; 
     } finally {
       setIsLoading(false);
     }
@@ -66,26 +80,32 @@ if (typeof window !== "undefined" && typeof window.localStorage !== "undefined")
   const register = async (email, password, fullName) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const mockUser = {
-        id: '1',
-        email,
-        fullName,
-        bio: ''
-      };
-      setUser(mockUser);
-      localStorage.setItem('iqfit_user', JSON.stringify(mockUser));
-      // Reset stats for new user
-      setStats({
-        workouts: 0,
-        studySessions: 0,
-        recipesTried: 0
+      // 1. Call the backend registration API
+      const response = await fetch('http://localhost:8080/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // NOTE: The backend expects fullName, email, and password
+        body: JSON.stringify({ fullName, email, password }) 
       });
-      localStorage.setItem('iqfit_stats', JSON.stringify({
-        workouts: 0,
-        studySessions: 0,
-        recipesTried: 0
-      }));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Registration failed.');
+      }
+
+      const userData = await response.json();
+
+      setUser(userData);
+      localStorage.setItem('iqfit_user', JSON.stringify(userData));
+
+      // Reset stats for new user
+      const initialStats = { workouts: 0, studySessions: 0, recipesTried: 0 };
+      setStats(initialStats);
+      localStorage.setItem('iqfit_stats', JSON.stringify(initialStats));
+      
+    } catch (error) {
+      console.error("Registration failed:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
