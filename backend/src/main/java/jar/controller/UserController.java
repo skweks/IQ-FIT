@@ -6,9 +6,11 @@ import org.springframework.web.bind.annotation.*;
 
 import jar.model.User;
 import jar.repository.UserRepository;
+import jar.repository.ActivityLogRepository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/users")
@@ -18,26 +20,25 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    // 1. Get all users
+    @Autowired
+    private ActivityLogRepository activityLogRepository;
+
     @GetMapping
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // 2. Create a new user (Register)
     @PostMapping
     public User createUser(@RequestBody User user) {
         return userRepository.save(user);
     }
 
-    // 3. Login Endpoint
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-        // DEBUG: Print what we received
-        System.out.println("Login attempt for email: " + loginRequest.getEmail());
-
-        // Find the user by email
         User user = userRepository.findByEmail(loginRequest.getEmail());
+        if (user == null) return ResponseEntity.status(401).body("User not found");
+        if (user.getPassword().equals(loginRequest.getPassword())) return ResponseEntity.ok(user);
+        else return ResponseEntity.status(401).body("Invalid email or password");
 
         if (user == null) {
             System.out.println("❌ User NOT found in database.");
@@ -58,13 +59,11 @@ public class UserController {
         }
     }
 
-    // 4. DELETE USER (Admin)
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
         userRepository.deleteById(id);
     }
 
-    // 5. SUSPEND USER (Admin)
     @PutMapping("/{id}/suspend")
     public User toggleSuspendUser(@PathVariable Long id) {
         User user = userRepository.findById(id).orElseThrow();
@@ -72,9 +71,9 @@ public class UserController {
         return userRepository.save(user);
     }
 
-    // 6. UPDATE USER PROFILE (User + Physical Stats)
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -84,22 +83,36 @@ public class UserController {
         user.setGender(userDetails.getGender());
         user.setDateOfBirth(userDetails.getDateOfBirth());
         user.setBio(userDetails.getBio());
-
-        // Update Physical Stats
         user.setWeight(userDetails.getWeight());
         user.setHeight(userDetails.getHeight());
-
-        // Update Password (ONLY if the user typed something new)
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
-            // In a real app, you would encrypt this password here before saving!
             user.setPassword(userDetails.getPassword());
-            System.out.println("🔒 Password updated for user: " + user.getEmail());
         }
-
         User updatedUser = userRepository.save(user);
         return ResponseEntity.ok(updatedUser);
     }
 
+    // --- NEW: MANAGE SUBSCRIPTION STATUS (Cancel/Upgrade) ---
+    @PutMapping("/{id}/subscription")
+    public ResponseEntity<User> updateSubscriptionStatus(@PathVariable Long id, @RequestParam boolean isPremium) {
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setPremium(isPremium); // Updates the DB
+        return ResponseEntity.ok(userRepository.save(user));
+    }
+    // --------------------------------------------------------
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<Map<String, Long>> getUserStats(@PathVariable Long id) {
+        long workouts = activityLogRepository.countByUserIdAndStatusAndContentContentType(id, "COMPLETED", "WORKOUT");
+        long study = activityLogRepository.countByUserIdAndStatusAndContentContentType(id, "COMPLETED", "STUDY_TIP");
+        long recipes = activityLogRepository.countByUserIdAndStatusAndContentContentType(id, "COMPLETED", "RECIPE");
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("workouts", workouts);
+        stats.put("studySessions", study);
+        stats.put("recipesTried", recipes);
+        
+        return ResponseEntity.ok(stats);
     @PutMapping("/{id}/role")
     public ResponseEntity<User> updateRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
         String newRole = request.get("role");

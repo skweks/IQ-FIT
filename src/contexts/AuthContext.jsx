@@ -20,35 +20,41 @@ export const AuthProvider = ({ children }) => {
   });
 
   useEffect(() => {
-if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
-  const storedUser = localStorage.getItem("iqfit_user");
-  const storedStats = localStorage.getItem("iqfit_stats");
+    // Load user and stats from localStorage on mount
+    const storedUser = localStorage.getItem("iqfit_user");
+    const storedStats = localStorage.getItem("iqfit_stats");
 
-  if (storedUser) {
-    setUser(JSON.parse(storedUser));
-  }
-  if (storedStats) {
-    setStats(JSON.parse(storedStats));
-  }
-}
-
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user data", e);
+      }
+    }
+    
+    if (storedStats) {
+      try {
+        setStats(JSON.parse(storedStats));
+      } catch (e) {
+        console.error("Failed to parse stats", e);
+      }
+    }
+    
     setIsLoading(false);
   }, []);
 
-  // --- NEW FUNCTION TO UPDATE USER PROFILE ---
   const updateProfile = (profileData) => {
-    // 1. Update the user object
     const updatedUser = { ...user, ...profileData };
     setUser(updatedUser);
-    
-    // 2. Persist the updated user to localStorage
     localStorage.setItem('iqfit_user', JSON.stringify(updatedUser));
   };
-  // -------------------------------------------
 
   const login = async (email, password) => {
+    // This function is mainly a placeholder if logic is handled in LoginPage
+    // But typically it would fetch from API and then setUser
     setIsLoading(true);
     try {
+       // Simulation or API call logic here
       // 1. Call the backend login API
       const response = await fetch('http://localhost:8080/api/users/login', {
         method: 'POST',
@@ -107,36 +113,33 @@ if (typeof window !== "undefined" && typeof window.localStorage !== "undefined")
       console.error("Registration failed:", error);
       throw error;
     } finally {
-      setIsLoading(false);
+       setIsLoading(false);
     }
   };
 
   const logout = () => {
     setUser(null);
-    setStats({
-      workouts: 0,
-      studySessions: 0,
-      recipesTried: 0
-    });
+    setStats({ workouts: 0, studySessions: 0, recipesTried: 0 });
     localStorage.removeItem('iqfit_user');
     localStorage.removeItem('iqfit_stats');
+    // Optional: clear other keys
+    localStorage.removeItem('iqfit_daily_progress'); 
   };
 
-  // Functions for incrementing progress
   const incrementWorkouts = () => {
-    const newStats = { ...stats, workouts: stats.workouts + 1 };
+    const newStats = { ...stats, workouts: (stats.workouts || 0) + 1 };
     setStats(newStats);
     localStorage.setItem('iqfit_stats', JSON.stringify(newStats));
   };
 
   const incrementStudySessions = () => {
-    const newStats = { ...stats, studySessions: stats.studySessions + 1 };
+    const newStats = { ...stats, studySessions: (stats.studySessions || 0) + 1 };
     setStats(newStats);
     localStorage.setItem('iqfit_stats', JSON.stringify(newStats));
   };
 
   const incrementRecipesTried = () => {
-    const newStats = { ...stats, recipesTried: stats.recipesTried + 1 };
+    const newStats = { ...stats, recipesTried: (stats.recipesTried || 0) + 1 };
     setStats(newStats);
     localStorage.setItem('iqfit_stats', JSON.stringify(newStats));
   };
@@ -145,11 +148,10 @@ if (typeof window !== "undefined" && typeof window.localStorage !== "undefined")
     <AuthContext.Provider value={{
       user,
       login,
-      register,
       logout,
       isLoading,
       stats,
-      updateProfile, // <-- EXPORTING NEW FUNCTION
+      updateProfile,
       incrementWorkouts,
       incrementStudySessions,
       incrementRecipesTried
