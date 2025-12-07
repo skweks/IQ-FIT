@@ -1,8 +1,58 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Users, Dumbbell, Activity, PlusCircle, Trash2, BookOpen, LogOut, LayoutGrid, Coffee, Search, Ban, CheckCircle, MoreVertical, DollarSign, Mail, MessageSquare, Pencil, X, RotateCcw, Filter, Crown, TrendingUp } from 'lucide-react';
+import { Users, Dumbbell, Activity, PlusCircle, Trash2, BookOpen, LogOut, LayoutGrid, Coffee, Search, Ban, Shield, CheckCircle, MoreVertical, DollarSign, Mail, MessageSquare, Pencil, X, RotateCcw, Filter, Crown, TrendingUp } from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
 
+// Define the API_URL constant here
+const API_URL = 'http://localhost:8080/api'; 
+
+// --- TOAST NOTIFICATION COMPONENT ---
+// (Kept separate for clean, non-blocking feedback)
+const ToastNotification = ({ message, type, onClose }) => {
+    if (!message) return null;
+
+    let icon, colorClasses, title;
+
+    switch (type) {
+        case 'success':
+            icon = <CheckCircle className="w-5 h-5 text-emerald-600" />;
+            colorClasses = "border-emerald-500 bg-emerald-50";
+            title = "Success";
+            break;
+        case 'error':
+            icon = <X className="w-5 h-5 text-red-600" />;
+            colorClasses = "border-red-500 bg-red-50";
+            title = "Error";
+            break;
+        case 'info':
+        default:
+            icon = <MoreVertical className="w-5 h-5 text-blue-600" />;
+            colorClasses = "border-blue-500 bg-blue-50";
+            title = "Info";
+            break;
+    }
+
+    return (
+        <div className="fixed top-6 right-6 z-50 transition-all duration-500 animate-in slide-in-from-right-10 fade-in">
+            <div className={`w-full max-w-sm border-l-4 shadow-2xl rounded-xl p-4 flex items-start gap-4 ${colorClasses}`}>
+                <div className="p-2 rounded-full shrink-0">
+                    {icon}
+                </div>
+                <div className="flex-1">
+                    <h4 className="font-bold text-slate-800 text-sm mb-0.5">{title}</h4>
+                    <p className="text-slate-600 text-xs leading-relaxed">{message}</p>
+                </div>
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    );
+};
+// --- END TOAST COMPONENT ---
+
+
 export function AdminDashboard() {
+    // STATE DECLARATIONS (MUST BE UNCONDITIONAL)
     const [users, setUsers] = useState([]);
     const [payments, setPayments] = useState([]);
     const [content, setContent] = useState([]);
@@ -17,6 +67,23 @@ export function AdminDashboard() {
 
     const navigate = useNavigate();
 
+    // --- NEW CONFIRM MODAL STATE ---
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info', // 'info' or 'danger'
+        onConfirm: () => {},
+    });
+
+    // --- TOAST STATE ---
+    const [toast, setToast] = useState({ message: '', type: 'info' });
+
+    // Function to easily show the toast
+    const showToast = useCallback((message, type) => {
+        setToast({ message, type });
+    }, []);
+
     // Form State
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -27,22 +94,28 @@ export function AdminDashboard() {
         videoUrl: '', sets: 3, reps: '12', restTimeSeconds: 60
     });
 
+    // --- FETCH DATA HOOK (UNCONDITIONAL) ---
     const fetchData = useCallback(() => {
-        fetch('http://localhost:8080/api/users').then(res => res.json()).then(setUsers);
-        fetch('http://localhost:8080/api/payments').then(res => res.json()).then(setPayments);
-        fetch('http://localhost:8080/api/content').then(res => res.json()).then(setContent);
-        fetch('http://localhost:8080/api/messages').then(res => res.json()).then(setMessages);
-    }, []);
+        // Fetch calls go here, they don't depend on user state
+        fetch(`${API_URL}/users`).then(res => res.json()).then(setUsers);
+        fetch(`${API_URL}/payments`).then(res => res.json()).then(setPayments);
+        fetch(`${API_URL}/content`).then(res => res.json()).then(setContent);
+        fetch(`${API_URL}/messages`).then(res => res.json()).then(setMessages);
+    }, [setUsers, setPayments, setContent, setMessages]); // DEPENDENCIES ARE CRITICAL
 
+    // --- SINGLE useEffect for Auth and Data Loading (UNCONDITIONAL) ---
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('iqfit_user'));
+        
         if (!user || user.role !== 'ADMIN') {
+            // Redirect if not an admin.
             navigate('/dashboard'); 
-            return;
+        } else {
+            // Fetch data only if authenticated as Admin.
+            fetchData();
         }
-        fetchData();
-    }, [navigate, fetchData]);
-
+    }, [navigate, fetchData]); // Dependencies are correct
+    
     // --- HELPER: Reset Form ---
     const resetForm = () => {
         setNewItem({ 
@@ -54,7 +127,8 @@ export function AdminDashboard() {
         setEditingId(null);
     };
 
-    // --- ACTIONS ---
+    // --- ACTION HANDLERS ---
+    
     const handleSave = async (e) => {
         e.preventDefault();
         const type = activeTab === 'workouts' ? 'WORKOUT' : 
@@ -62,25 +136,32 @@ export function AdminDashboard() {
                      activeTab === 'tips' ? 'STUDY_TIP' : newItem.contentType;
         
         const payload = { ...newItem, contentType: type };
+        let successMessage;
 
-        if (isEditing && editingId) {
-            await fetch(`http://localhost:8080/api/content/${editingId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            alert("Updated Successfully!");
-        } else {
-            await fetch('http://localhost:8080/api/content', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            alert("Added Successfully!");
+        try {
+            if (isEditing && editingId) {
+                await fetch(`${API_URL}/content/${editingId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                successMessage = "Updated Successfully!";
+            } else {
+                await fetch(`${API_URL}/content`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                successMessage = "Added Successfully!";
+            }
+            
+            fetchData();
+            resetForm();
+            showToast(successMessage, 'success');
+            
+        } catch (error) {
+            showToast("Failed to save content.", 'error');
         }
-        
-        fetchData();
-        resetForm();
     };
 
     const handleEdit = (item) => {
@@ -93,32 +174,148 @@ export function AdminDashboard() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDelete = async (id) => {
-        if(window.confirm("Delete this item?")) {
-            await fetch(`http://localhost:8080/api/content/${id}`, { method: 'DELETE' });
-            fetchData();
-            if (editingId === id) resetForm();
-        }
+    const handleDelete = (id) => {
+        setConfirmModal({
+            isOpen: true,
+            title: "Confirm Deletion",
+            message: "Are you sure you want to permanently delete this content item?",
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await fetch(`${API_URL}/content/${id}`, { method: 'DELETE' });
+                    fetchData();
+                    if (editingId === id) resetForm();
+                    showToast("Content item deleted successfully.", 'success');
+                } catch (error) {
+                    showToast("Failed to delete content.", 'error');
+                }
+            }
+        });
     };
 
-    const handleSuspendUser = async (id) => {
-        await fetch(`http://localhost:8080/api/users/${id}/suspend`, { method: 'PUT' });
-        fetchData();
+    const handleSuspendUser = (id) => {
+        setConfirmModal({
+            isOpen: true,
+            title: "Confirm Action",
+            message: "Toggle user ID " + id + "'s suspension status?",
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    await fetch(`${API_URL}/users/${id}/suspend`, { method: 'PUT' });
+                    fetchData();
+                    showToast("User suspension status toggled.", 'success');
+                } catch (error) {
+                    showToast("Failed to update suspension status.", 'error');
+                }
+            }
+        });
     };
 
-    const handleDeleteUser = async (id) => {
-        if(window.confirm("Permanently delete this user?")) {
-            await fetch(`http://localhost:8080/api/users/${id}`, { method: 'DELETE' });
-            fetchData();
-        }
+    const handleDeleteUser = (id) => {
+        setConfirmModal({
+            isOpen: true,
+            title: "Permanently Delete User",
+            message: "WARNING: This action cannot be undone. Permanently delete user ID " + id + "?",
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
+                    fetchData();
+                    showToast("User account permanently deleted.", 'success');
+                } catch (error) {
+                    showToast("Failed to delete user account.", 'error');
+                }
+            }
+        });
     };
 
-    const handleDeleteMessage = async (id) => {
-        if(window.confirm("Delete this message?")) {
-            await fetch(`http://localhost:8080/api/messages/${id}`, { method: 'DELETE' });
-            fetchData();
-        }
+    const handleDeleteMessage = (id) => {
+        setConfirmModal({
+            isOpen: true,
+            title: "Delete Message",
+            message: "Are you sure you want to delete this contact message?",
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    await fetch(`${API_URL}/messages/${id}`, { method: 'DELETE' });
+                    fetchData();
+                    showToast("Message deleted successfully.", 'success');
+                } catch (error) {
+                    showToast("Failed to delete message.", 'error');
+                }
+            }
+        });
     };
+    
+    // --- USER MANAGEMENT ACTIONS (UPDATED TO USE MODAL) ---
+    const handleUpdateUserRole = (userId, currentRole) => {
+        const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
+        const action = currentRole === 'ADMIN' ? 'Demote to User' : 'Promote to Admin';
+        
+        setConfirmModal({
+            isOpen: true,
+            title: action,
+            message: `Are you sure you want to ${action.toLowerCase()} for user ID ${userId}?`,
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`${API_URL}/users/${userId}/role`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: newRole })
+                    });
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error(`Server rejected role update (Status ${response.status}):`, errorBody);
+                        throw new Error(`Role update failed: ${response.status} - ${errorBody.substring(0, 50)}...`);
+                    }
+                    
+                    const updatedUser = await response.json();
+                    setUsers(users.map(u => u.id === userId ? updatedUser : u));
+                    showToast(`User role updated to ${newRole}.`, 'success');
+
+                } catch (err) {
+                    showToast(`Update failed. Reason: ${err.message}`, 'error');
+                }
+            }
+        });
+    };
+
+    const handleUpdatePremiumStatus = (userId, currentIsPremium) => {
+        const newIsPremium = !currentIsPremium;
+        const action = newIsPremium ? "Grant PREMIUM access" : "Revoke PREMIUM access";
+        
+        setConfirmModal({
+            isOpen: true,
+            title: action,
+            message: `Are you sure you want to ${action.toLowerCase()} for user ID ${userId}?`,
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`${API_URL}/users/${userId}/premium`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isPremium: newIsPremium })
+                    });
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error(`Server rejected premium update (Status ${response.status}):`, errorBody);
+                        throw new Error(`Premium update failed: ${response.status} - ${errorBody.substring(0, 50)}...`);
+                    }
+                    
+                    const updatedUser = await response.json();
+                    setUsers(users.map(u => u.id === userId ? updatedUser : u));
+                    showToast(`User premium status set to ${newIsPremium}.`, 'success');
+        
+                } catch (err) {
+                    showToast(`Update failed. Reason: ${err.message}`, 'error');
+                }
+            }
+        });
+    };
+    // --- END USER MANAGEMENT ACTIONS ---
 
     const getFilteredContent = (type) => {
         let filtered = content.filter(c => c.contentType === type);
@@ -142,10 +339,78 @@ export function AdminDashboard() {
     });
 
     const WORKOUT_CATEGORIES = ['FULL BODY', 'PUSH', 'PULL', 'LEGS', 'CHEST', 'ARMS', 'CORE', 'CARDIO'];
-    const OTHER_CATEGORIES = ['General', 'Nutrition', 'Productivity', 'Mental Health'];
+    const STUDY_CATEGORIES = ['General', 'Nutrition', 'Productivity', 'Mental Health'];
+    const FOOD_CATEGORIES = ['VEGAN', 'VEGETARIAN', 'GLUTEN_FREE', 'KETO', 'PALEO'];
 
+    // --- NEW CONFIRM MODAL COMPONENT ---
+    const ConfirmActionModal = () => {
+        if (!confirmModal.isOpen) return null;
+
+        let icon, color, confirmButtonClasses;
+
+        // Base styling logic based on type (Danger/Info)
+        switch (confirmModal.type) {
+            case 'danger':
+                icon = <Ban className="w-8 h-8 text-red-600" />;
+                color = "border-red-500";
+                confirmButtonClasses = "bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/30";
+                break;
+            case 'info':
+            default:
+                icon = <Shield className="w-8 h-8 text-blue-600" />;
+                color = "border-blue-500";
+                confirmButtonClasses = "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30";
+                break;
+        }
+
+        const closeModal = () => setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        
+        const handleConfirm = () => {
+            confirmModal.onConfirm();
+            closeModal();
+        };
+
+        return (
+            <div className="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center border-t-8 border-b-4 transition-all duration-300 transform scale-100" style={{ borderColor: color.split('-')[1] }}>
+                    <div className="mx-auto w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-6">
+                        {icon}
+                    </div>
+                    
+                    <h3 className="text-xl font-black text-slate-800 mb-3">{confirmModal.title}</h3>
+                    <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">{confirmModal.message}</p>
+                    
+                    <div className="flex gap-4">
+                        <button 
+                            onClick={closeModal} 
+                            className="w-1/2 py-3.5 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleConfirm} 
+                            className={`w-1/2 py-3.5 rounded-xl text-white font-bold transition-colors ${confirmButtonClasses}`}
+                        >
+                            Confirm Action
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // --- MAIN RENDER BLOCK ---
     return (
         <div className="min-h-screen bg-slate-100 flex font-sans text-slate-900">
+            
+            {/* RENDER THE MODALS/TOASTS HERE */}
+            <ConfirmActionModal /> 
+            <ToastNotification 
+                message={toast.message} 
+                type={toast.type} 
+                onClose={() => setToast({ message: '', type: 'info' })}
+            />
+            
             {/* Sidebar */}
             <aside className="w-72 bg-slate-900 text-white min-h-screen p-6 fixed flex flex-col shadow-2xl z-30">
                 <div className="flex items-center gap-3 mb-12 px-2">
@@ -371,6 +636,7 @@ export function AdminDashboard() {
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                         FREE
                                                     </span>
+                                                    
                                                 )}
                                             </td>
                                             <td className="p-5">
@@ -385,24 +651,45 @@ export function AdminDashboard() {
                                                 )}
                                             </td>
                                             <td className="p-5 pr-8 text-right">
-                                                {user.role !== 'ADMIN' && (
-                                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button 
-                                                            onClick={() => handleSuspendUser(user.id)}
-                                                            className={`p-2 rounded-lg transition-colors ${user.suspended ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
-                                                            title={user.suspended ? "Activate" : "Suspend"}
-                                                        >
-                                                            {user.suspended ? <CheckCircle className="w-4 h-4"/> : <Ban className="w-4 h-4"/>}
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => handleDeleteUser(user.id)}
-                                                            className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                                            title="Delete User"
-                                                        >
-                                                            <Trash2 className="w-4 h-4"/>
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                <div className="flex justify-end gap-2">
+                                                     {/* Action 1: Change Role (Promote/Demote) */}
+                                                    <button 
+                                                        onClick={() => handleUpdateUserRole(user.id, user.role)}
+                                                        // Colors changed to purple/red for clarity on who is admin/user
+                                                        className={`p-2 rounded-lg text-white shadow-md transition-all text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-500 hover:bg-purple-600' : 'bg-red-500 hover:bg-red-600'}`}
+                                                        title={user.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin'}
+                                                    >
+                                                        <Shield className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* Action 2: Change Premium Status (Plan) */}
+                                                    <button 
+                                                        onClick={() => handleUpdatePremiumStatus(user.id, user.isPremium)}
+                                                        // Colors changed to amber/slate for clarity on premium status
+                                                        className={`p-2 rounded-lg text-white shadow-md transition-all text-xs font-bold ${user.isPremium ? 'bg-slate-500 hover:bg-slate-600' : 'bg-amber-500 hover:bg-amber-600'}`}
+                                                        title={user.isPremium ? 'Revoke Premium' : 'Grant Premium'}
+                                                    >
+                                                        <Crown className="w-4 h-4" />
+                                                    </button>
+                                                    
+                                                    {/* Original Suspend/Activate Button */}
+                                                    <button 
+                                                        onClick={() => handleSuspendUser(user.id)}
+                                                        className={`p-2 rounded-lg transition-colors bg-slate-50 text-slate-600 hover:bg-slate-100`}
+                                                        title={user.suspended ? "Activate" : "Suspend"}
+                                                    >
+                                                         {user.suspended ? <CheckCircle className="w-4 h-4 text-emerald-600"/> : <Ban className="w-4 h-4 text-amber-600"/>}
+                                                    </button>
+
+                                                    {/* Original Delete Button */}
+                                                    <button 
+                                                        onClick={() => handleDeleteUser(user.id)}
+                                                        className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                                        title="Delete User"
+                                                    >
+                                                        <Trash2 className="w-4 h-4"/>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -598,7 +885,7 @@ export function AdminDashboard() {
                                     <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Category</label>
                                     <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-blue-500 transition-all text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
                                         <option value="">Select Category</option>
-                                        {OTHER_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                        {STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <Select label="Access" val={newItem.accessLevel} set={v => setNewItem({...newItem, accessLevel: v})} opts={['FREE','PREMIUM']} />
