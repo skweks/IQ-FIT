@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dumbbell, Mail, Lock, User, Eye, EyeOff, Calendar, Users, ArrowLeft, UserPlus } from 'lucide-react';
+import { Dumbbell, Mail, Lock, User, Eye, EyeOff, Calendar, Users, ArrowLeft, UserPlus, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
 
 export function RegisterPage() {
@@ -14,8 +14,10 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Status States
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); // NEW: Success Notification State
   
   const navigate = useNavigate();
 
@@ -46,7 +48,7 @@ export function RegisterPage() {
         fullName: fullName,
         email: email,
         password: password,
-        dateOfBirth: dateOfBirth,
+        dateOfBirth: dateOfBirth, 
         gender: gender,
         role: "CLIENT"
     };
@@ -61,23 +63,46 @@ export function RegisterPage() {
         });
 
         if (response.ok) {
-            console.log("User Registered Successfully");
-            navigate('/login');
+            // Show Success Notification
+            setShowSuccess(true);
+            
+            // Wait 2 seconds for the user to see the notification, then redirect
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
+            
         } else {
             setError('Registration failed. Email might already be taken.');
+            setIsLoading(false);
         }
 
     } catch (err) {
       console.error(err);
       setError('Network error. Is the backend running?');
-    } finally {
       setIsLoading(false);
-    }
+    } 
+    // Note: Removed finally{setIsLoading(false)} to keep loading state active during redirect delay
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex relative overflow-hidden">
       
+      {/* --- SUCCESS NOTIFICATION --- */}
+      {showSuccess && (
+        <div className="fixed top-6 right-6 z-50 flex items-start gap-4 p-4 bg-white border-l-4 border-green-500 rounded-xl shadow-2xl animate-in slide-in-from-right-10 fade-in duration-300 max-w-sm">
+            <div className="p-2 bg-green-50 rounded-full shrink-0">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+                <h4 className="text-sm font-bold text-slate-900">Account Created!</h4>
+                <p className="text-xs text-slate-500 mt-1">Welcome to IQ-FIT. Redirecting you to login...</p>
+            </div>
+            <button onClick={() => setShowSuccess(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-4 h-4" />
+            </button>
+        </div>
+      )}
+
       {/* --- Left Side: Branding / Visuals (Hidden on mobile) --- */}
       <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative overflow-hidden items-center justify-center">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[100px] -mr-20 -mt-20"></div>
@@ -111,7 +136,7 @@ export function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
-                    <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+                    <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 animate-pulse">
                         <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
                         {error}
                     </div>
