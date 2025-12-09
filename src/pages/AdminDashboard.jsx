@@ -17,6 +17,10 @@ export function AdminDashboard() {
 
     const navigate = useNavigate();
 
+        // NEW: Study Tips Filters (Matches StudyTips.jsx)
+    const [studyCategoryFilter, setStudyCategoryFilter] = useState('ALL');
+    const [studyAccessFilter, setStudyAccessFilter] = useState('ALL');
+
     // Form State
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -142,7 +146,19 @@ export function AdminDashboard() {
     });
 
     const WORKOUT_CATEGORIES = ['FULL BODY', 'PUSH', 'PULL', 'LEGS', 'CHEST', 'ARMS', 'CORE', 'CARDIO'];
-    const OTHER_CATEGORIES = ['General', 'Nutrition', 'Productivity', 'Mental Health'];
+    // UPDATED: Matched exactly with StudyTips.jsx
+    const STUDY_CATEGORIES = ['Time Management', 'Memory', 'Focus', 'Learning Strategy', 'Understanding', 'Organization', 'Productivity', 'Reading', 'Wellness'];
+    const RECIPE_CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Smoothie', 'High Protein'];
+
+
+    // Helper to get current categories for the form dropdown
+    const getCurrentFormCategories = () => {
+        if (activeTab === 'workouts') return WORKOUT_CATEGORIES;
+        if (activeTab === 'tips') return STUDY_CATEGORIES;
+        if (activeTab === 'recipes') return RECIPE_CATEGORIES;
+        return [];
+    };
+
 
     return (
         <div className="min-h-screen bg-slate-100 flex font-sans text-slate-900">
@@ -574,7 +590,7 @@ export function AdminDashboard() {
                     </div>
                 )}
 
-                {/* --- TIPS & RECIPES TAB --- */}
+                {/* --- TIPS & RECIPES TAB (SEPARATED) --- */}
                 {(activeTab === 'tips' || activeTab === 'recipes') && (
                     <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit sticky top-6 lg:col-span-1">
@@ -598,7 +614,7 @@ export function AdminDashboard() {
                                     <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Category</label>
                                     <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-blue-500 transition-all text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
                                         <option value="">Select Category</option>
-                                        {OTHER_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                        {getCurrentFormCategories().map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <Select label="Access" val={newItem.accessLevel} set={v => setNewItem({...newItem, accessLevel: v})} opts={['FREE','PREMIUM']} />
@@ -607,28 +623,73 @@ export function AdminDashboard() {
                                 </button>
                             </form>
                         </div>
-                        <div className="lg:col-span-2 space-y-4">
-                            {getFilteredContent(activeTab === 'tips' ? 'STUDY_TIP' : 'RECIPE').map(item => (
-                                <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex justify-between items-center hover:shadow-lg transition-all duration-300 group">
-                                    <div className="flex gap-5 items-center">
-                                        <div className={`p-4 rounded-2xl shrink-0 ${activeTab === 'tips' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                                            {activeTab === 'tips' ? <BookOpen className="w-6 h-6" /> : <Coffee className="w-6 h-6" />}
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-lg text-slate-900 mb-1">{item.title}</h4>
-                                            <p className="text-sm text-slate-500 line-clamp-1">{item.description}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => handleEdit(item)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
-                                            <Pencil className="w-5 h-5"/>
-                                        </button>
-                                        <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
-                                            <Trash2 className="w-5 h-5"/>
-                                        </button>
-                                    </div>
+                        <div className="lg:col-span-2 flex flex-col h-full">
+                            
+                            {/* --- NEW: FILTERS FOR TIPS/RECIPES --- */}
+                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center sticky top-0 z-10">
+                                <div className="flex items-center gap-2 text-slate-500 text-sm font-bold uppercase tracking-wider">
+                                    <Filter className="w-4 h-4" /> Filters:
                                 </div>
-                            ))}
+                                <div className="flex gap-3">
+                                    <select 
+                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                                        value={studyCategoryFilter}
+                                        onChange={(e) => setStudyCategoryFilter(e.target.value)}
+                                    >
+                                        <option value="ALL">All Categories</option>
+                                        {activeTab === 'tips' 
+                                            ? STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)
+                                            : RECIPE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)
+                                        }
+                                    </select>
+                                    <select 
+                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                                        value={studyAccessFilter}
+                                        onChange={(e) => setStudyAccessFilter(e.target.value)}
+                                    >
+                                        <option value="ALL">All Tiers</option>
+                                        <option value="FREE">Free</option>
+                                        <option value="PREMIUM">Premium</option>
+                                    </select>
+                                </div>
+                                <span className="ml-auto text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                    {getFilteredContent(activeTab === 'tips' ? 'STUDY_TIP' : 'RECIPE').length} Items
+                                </span >
+                            </div>
+
+                            <div className="space-y-4 overflow-y-auto max-h-[800px] pr-2 pb-20 custom-scrollbar">
+                                {getFilteredContent(activeTab === 'tips' ? 'STUDY_TIP' : 'RECIPE').map(item => (
+                                    <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex justify-between items-center hover:shadow-lg transition-all duration-300 group">
+                                        <div className="flex gap-5 items-center">
+                                            <div className={`p-4 rounded-2xl shrink-0 ${activeTab === 'tips' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
+                                                {activeTab === 'tips' ? <BookOpen className="w-6 h-6" /> : <Coffee className="w-6 h-6" />}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <h4 className="font-bold text-lg text-slate-900 mb-1">{item.title}</h4>
+                                                    <Badge label={item.category} color="slate" />
+                                                    {item.accessLevel === 'PREMIUM' && <span className="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-amber-200 tracking-wide">PREMIUM</span>}
+                                                </div>
+                                                <p className="text-sm text-slate-500 line-clamp-1">{item.description}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleEdit(item)} className={`p-3 text-slate-400 rounded-xl transition-all ${activeTab === 'tips' ? 'hover:text-purple-600 hover:bg-purple-50' : 'hover:text-green-600 hover:bg-green-50'}`}>
+                                                <Pencil className="w-5 h-5"/>
+                                            </button>
+                                            <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
+                                                <Trash2 className="w-5 h-5"/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {getFilteredContent(activeTab === 'tips' ? 'STUDY_TIP' : 'RECIPE').length === 0 && (
+                                    <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-3xl">
+                                        <p className="text-slate-500 font-bold">No items found.</p>
+                                        <button onClick={() => {setStudyCategoryFilter('ALL'); setStudyAccessFilter('ALL');}} className="text-blue-600 text-sm font-bold mt-2 hover:underline">Clear Filters</button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
