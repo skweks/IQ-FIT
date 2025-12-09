@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, UtensilsCrossed, Clock, Users, ChefHat, Leaf, Play, Pause, Check, SkipForward, Flame, Dumbbell, Trophy, Info, List } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Clock, Users, ChefHat, Leaf, Play, Pause, Check, SkipForward, Flame, Trophy,Dumbbell, Info, List, ChevronLeft, Lock } from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,6 +8,18 @@ const formatTime = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+// --- HELPER: Embed URL ---
+const getEmbedUrl = (url) => {
+    if (!url) return null;
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        if (url.includes('embed')) return url;
+        if (url.includes('/shorts/')) return `https://www.youtube.com/embed/${url.split('/shorts/')[1]?.split('?')[0]}`;
+        if (url.includes('v=')) return `https://www.youtube.com/embed/${url.split('v=')[1]?.split('&')[0]}`;
+        if (url.includes('youtu.be')) return `https://www.youtube.com/embed/${url.split('/').pop()?.split('?')[0]}`;
+    }
+    return null; 
 };
 
 // --- COOKTHROUGH PLAYER COMPONENT ---
@@ -20,6 +32,12 @@ const RecipeCookthrough = ({ recipe, onComplete, onBack }) => {
       { name: 'Preparation', time: 300, type: 'Prep', instructions: 'Gather your ingredients.' },
       { name: 'Cooking', time: 900, type: 'Cook', instructions: 'Follow the cooking instructions.' }
   ];
+
+  // Get Macros
+  const nutrition = details?.nutrition || { calories: 'N/A', protein: 'N/A', fats: 'N/A', carbs: 'N/A' };
+  
+  // Get Video
+  const videoEmbed = getEmbedUrl(recipe.videoUrl);
 
   const [stepIndex, setStepIndex] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -46,7 +64,7 @@ const RecipeCookthrough = ({ recipe, onComplete, onBack }) => {
   useEffect(() => {
     if (!isFinished && currentStep) {
       setSecondsRemaining(currentStep.time);
-      setIsRunning(false); // Default to paused for safety in cooking
+      setIsRunning(false); 
     }
   }, [stepIndex, isFinished, currentStep]);
 
@@ -78,139 +96,131 @@ const RecipeCookthrough = ({ recipe, onComplete, onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-12 px-6 font-sans">
-        <div className="max-w-5xl mx-auto">
-            <button
-              onClick={() => onBack(null)}
-              className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors mb-6 font-medium"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Quit Cooking
+    <div className="min-h-screen bg-slate-50 font-sans">
+        {/* Header / Nav */}
+        <div className="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm">
+            <button onClick={() => onBack(null)} className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-bold transition-colors">
+                <ChevronLeft className="w-5 h-5" /> Back
             </button>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Nutrition Kitchen</span>
+            <div className="w-16"></div> 
+        </div>
+
+        <div className="max-w-6xl mx-auto p-6 md:p-12">
             
-            <div className="grid lg:grid-cols-2 gap-8">
-                {/* Active Step Column */}
-                <div className="bg-white rounded-3xl shadow-xl p-8 h-fit lg:sticky lg:top-12 text-center border border-slate-100">
-                    <h2 className="text-3xl font-black text-slate-900 mb-2">{recipe.title}</h2>
-                    <p className="text-lg text-slate-500 mb-8 font-medium">Interactive Cook Mode</p>
-  
-                    {isFinished ? (
-                        <div className="py-10 animate-in zoom-in duration-300">
-                          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                             <Check className="w-12 h-12 text-green-600" />
-                          </div>
-                          <h3 className="text-2xl font-bold text-slate-800 mb-4">Bon Appétit!</h3>
-                          <p className="text-slate-500 mb-8">You've completed this recipe. Don't forget to log it!</p>
-                          <button
-                            onClick={handleComplete}
-                            className="w-full py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
-                          >
-                            <Check className="w-5 h-5" />
-                            Finish & Log Meal
-                          </button>
-                        </div>
+            {/* Title Section */}
+            <div className="text-center mb-10">
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-wide mb-3 inline-block">
+                    {recipe.category}
+                </span>
+                <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">{recipe.title}</h1>
+                <div className="flex justify-center gap-6 text-sm font-bold text-slate-500">
+                    <span className="flex items-center gap-1.5"><Clock className="w-4 h-4"/> {recipe.durationMinutes || 15} min</span>
+                    <span className="flex items-center gap-1.5"><Flame className="w-4 h-4 text-orange-500"/> {nutrition.calories} kcal</span>
+                </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-8">
+                {/* LEFT COL: Player & Ingredients */}
+                <div className="lg:col-span-2 space-y-8">
+                    {/* Media / Video */}
+                    <div className="w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl relative group">
+                        {videoEmbed ? (
+                            <iframe className="w-full h-full" src={videoEmbed} title="Cooking Guide" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                        ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-800 text-slate-500">
+                                <UtensilsCrossed className="w-16 h-16 mb-4 opacity-50" />
+                                <p className="font-medium">No video guide available.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Blog Style Steps */}
+                    {!isFinished ? (
+                         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                            <h3 className="text-2xl font-bold text-slate-900 mb-6">Instructions</h3>
+                            <div className="space-y-8">
+                                {steps.map((step, index) => (
+                                    <div key={index} className={`relative pl-8 border-l-2 ${index === stepIndex ? 'border-emerald-500' : 'border-slate-200'}`}>
+                                        <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 ${index <= stepIndex ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-300'}`}></div>
+                                        <h4 className={`font-bold text-lg ${index === stepIndex ? 'text-emerald-700' : 'text-slate-800'}`}>Step {index + 1}: {step.name}</h4>
+                                        <p className="text-slate-600 mt-2 leading-relaxed">{step.instructions}</p>
+                                        
+                                        {/* Active Step Timer Control */}
+                                        {index === stepIndex && step.time > 0 && (
+                                            <div className="mt-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <Clock className="w-5 h-5 text-emerald-600" />
+                                                    <span className="font-mono text-2xl font-bold text-emerald-800">{formatTime(secondsRemaining)}</span>
+                                                </div>
+                                                <button onClick={handleStartStop} className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                                                    {isRunning ? <Pause className="w-4 h-4"/> : <Play className="w-4 h-4"/>}
+                                                    {isRunning ? 'Pause' : 'Start Timer'}
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {index === stepIndex && (
+                                            <div className="mt-6 flex gap-3">
+                                                <button onClick={handleNextStep} className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2">
+                                                    Next Step <ChevronLeft className="w-4 h-4 rotate-180"/>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                         </div>
                     ) : (
-                        <>
-                            {/* Current Step Card */}
-                            <div className="mb-6 p-6 rounded-2xl border-2 border-emerald-100 bg-emerald-50/50">
-                                <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-2">Current Step: {currentStep?.type}</p>
-                                <h3 className="text-2xl font-bold text-slate-800">{currentStep?.name}</h3>
-                            </div>
-                            
-                            {/* Instructions */}
-                            <div className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-100 text-left">
-                                <div className="flex items-center gap-2 mb-3 text-slate-400">
-                                    <ChefHat className="w-4 h-4" />
-                                    <span className="text-xs font-bold uppercase tracking-wide">Instructions</span>
-                                </div>
-                                <p className="text-slate-700 text-lg leading-relaxed font-medium">{currentStep?.instructions}</p>
-                            </div>
-  
-                            {/* Timer */}
-                            <div className={`relative w-full py-10 rounded-3xl mb-8 transition-all duration-500 ${isRunning ? 'bg-orange-50 border-2 border-orange-100' : 'bg-slate-100'}`}>
-                                <p className="text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">Time Remaining</p>
-                                <div className={`text-7xl font-black font-mono tracking-tighter ${isRunning ? 'text-orange-500' : 'text-slate-400'}`}>
-                                  {formatTime(secondsRemaining)}
-                                </div>
-                            </div>
-                            
-                            {/* Controls */}
-                            <div className="flex gap-4 mb-6">
-                              <button
-                                onClick={handleStartStop}
-                                disabled={secondsRemaining === 0 && !isFinished || currentStep?.type === 'Note' || currentStep?.time === 0}
-                                className={`flex-1 py-4 text-white font-bold text-lg rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 active:translate-y-0 
-                                  ${isRunning 
-                                    ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-200' 
-                                    : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'} 
-                                  disabled:opacity-50 disabled:cursor-not-allowed`}
-                              >
-                                {isRunning ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
-                                {isRunning ? 'Pause Timer' : 'Start Timer'}
-                              </button>
-                               <button
-                                  onClick={handleSkip}
-                                  className="px-6 py-4 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-2xl hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2"
-                              >
-                                  <SkipForward className="w-6 h-6" />
-                              </button>
-                            </div>
-                            <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Step {stepIndex + 1} of {steps.length}</p>
-                        </>
+                        <div className="bg-white rounded-3xl shadow-xl p-12 text-center border border-emerald-100">
+                             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Check className="w-10 h-10 text-emerald-600" />
+                             </div>
+                             <h2 className="text-3xl font-black text-slate-900 mb-4">Meal Complete!</h2>
+                             <p className="text-slate-500 mb-8 max-w-md mx-auto">Great job! You've cooked a healthy meal. We've logged this to your nutrition stats.</p>
+                             <button onClick={handleComplete} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-emerald-200 hover:bg-emerald-700 hover:-translate-y-1 transition-all">
+                                Return to Kitchen
+                             </button>
+                        </div>
                     )}
                 </div>
-                
-                {/* Full Recipe Details Column */}
+
+                {/* RIGHT COL: Nutrition & Ingredients */}
                 <div className="space-y-6">
-                    {/* Ingredients Card */}
-                    <div className="bg-white rounded-3xl shadow-lg p-8 border border-slate-100">
-                        <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Leaf className="w-5 h-5 text-emerald-500" />
-                            Ingredients Needed
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {details?.ingredients?.map((ing, i) => (
-                                <span key={i} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium border border-slate-200">
-                                    {ing}
-                                </span>
-                            ))}
-                            {(!details?.ingredients || details.ingredients.length === 0) && <p className="text-slate-400 text-sm italic">No ingredients listed.</p>}
+                    {/* Macros Card */}
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <h3 className="font-black text-slate-900 mb-6 flex items-center gap-2"><Info className="w-5 h-5 text-blue-500"/> Nutrition Facts</h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center p-3 bg-blue-50/50 rounded-xl">
+                                <span className="text-xs font-bold text-slate-500 uppercase">Protein</span>
+                                <span className="font-black text-slate-900">{nutrition.protein}g</span>
+                            </div>
+                            <div className="flex justify-between items-center p-3 bg-orange-50/50 rounded-xl">
+                                <span className="text-xs font-bold text-slate-500 uppercase">Fats</span>
+                                <span className="font-black text-slate-900">{nutrition.fats}g</span>
+                            </div>
+                            <div className="flex justify-between items-center p-3 bg-yellow-50/50 rounded-xl">
+                                <span className="text-xs font-bold text-slate-500 uppercase">Carbs</span>
+                                <span className="font-black text-slate-900">{nutrition.carbs}g</span>
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
+                                <span className="font-bold text-slate-400 text-sm">Total Calories</span>
+                                <span className="font-black text-xl text-slate-900">{nutrition.calories}</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Roadmap */}
-                    <div className="bg-white rounded-3xl shadow-lg p-8 border border-slate-100">
-                        <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <List className="w-5 h-5 text-emerald-500" />
-                            Recipe Steps
-                        </h3>
+                    {/* Ingredients Card */}
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <h3 className="font-black text-slate-900 mb-6 flex items-center gap-2"><Leaf className="w-5 h-5 text-emerald-500"/> Ingredients</h3>
                         <ul className="space-y-3">
-                            {steps.map((step, index) => (
-                                <li 
-                                    key={index} 
-                                    className={`p-4 rounded-xl transition-all duration-300 border flex justify-between items-center group
-                                        ${index === stepIndex 
-                                            ? 'bg-emerald-50 border-emerald-200 ring-1 ring-emerald-100'
-                                            : index < stepIndex 
-                                            ? 'bg-slate-50 border-slate-100 text-slate-400'
-                                            : 'bg-white border-slate-100'
-                                        }`
-                                    }
-                                >
-                                    <div>
-                                        <p className={`font-bold text-sm ${index === stepIndex ? 'text-emerald-900' : 'text-slate-700'}`}>
-                                            {index + 1}. {step.name}
-                                        </p>
-                                        <span className="text-[10px] uppercase font-bold text-slate-400">{step.type}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-md ${index === stepIndex ? 'bg-emerald-200 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
-                                            {step.time > 0 ? formatTime(step.time) : '-'}
-                                        </span>
-                                        {index < stepIndex && <Check className="w-4 h-4 text-emerald-500" />}
-                                    </div>
+                            {details?.ingredients?.map((ing, i) => (
+                                <li key={i} className="flex items-start gap-3 text-sm font-medium text-slate-600">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0"></div>
+                                    {ing}
                                 </li>
                             ))}
+                            {(!details?.ingredients || details.ingredients.length === 0) && <li className="text-slate-400 italic text-sm">No ingredients listed.</li>}
                         </ul>
                     </div>
                 </div>
@@ -279,14 +289,17 @@ export const FoodRecipes = () => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const handleOpenRecipe = (recipe) => {
+      // Premium Check
+      if (recipe.accessLevel === 'PREMIUM' && !user?.isPremium) {
+          if(window.confirm("This recipe is exclusive to Premium members. Upgrade to unlock?")) navigate('/plans');
+          return;
+      }
+      setSelectedRecipe(recipe);
+  };
+
   if (selectedRecipe) {
-    return (
-      <RecipeCookthrough 
-        recipe={selectedRecipe} 
-        onComplete={incrementRecipesTried} 
-        onBack={setSelectedRecipe}
-      />
-    );
+      return <RecipeCookthrough recipe={selectedRecipe} onComplete={incrementRecipesTried} onBack={setSelectedRecipe} />;
   }
 
   return (
@@ -305,104 +318,54 @@ export const FoodRecipes = () => {
              <UtensilsCrossed className="w-8 h-8" />
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Nutrition Kitchen</h1>
-          <p className="text-lg text-slate-500 leading-relaxed">Discover healthy, high-protein meals designed to fuel your workouts and recovery.</p>
+          <p className="text-lg text-slate-500 leading-relaxed">Fuel your body with chef-curated, macro-friendly recipes.</p>
         </div>
 
-        {/* Stats Bar */}
-        <div className="grid md:grid-cols-4 gap-4 mb-12">
-            {[
-                { label: 'Recipes Available', val: recipes.length, icon: UtensilsCrossed, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                { label: 'Avg Calories', val: '450', icon: Flame, color: 'text-orange-600', bg: 'bg-orange-50' },
-                { label: 'High Protein', val: recipes.filter(r => r.category === 'High Protein').length, icon: Dumbbell, color: 'text-blue-600', bg: 'bg-blue-50' },
-                { label: 'Prep Time (Avg)', val: '15m', icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50' }
-            ].map((stat, i) => (
-                <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}><stat.icon className="w-5 h-5"/></div>
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                        <p className="text-xl font-black text-slate-900">{stat.val}</p>
-                    </div>
-                </div>
-            ))}
-        </div>
-
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-6 mb-2 no-scrollbar justify-center">
+        {/* Filter */}
+        <div className="flex gap-2 overflow-x-auto pb-6 mb-4 no-scrollbar justify-center">
             {CATEGORIES.map(cat => (
                 <button 
                     key={cat} 
-                    onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
+                    onClick={() => setSelectedCategory(cat)}
                     className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${selectedCategory === cat ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-200 hover:text-emerald-600'}`}
                 >
                     {cat}
                 </button>
             ))}
         </div>
-        
+
+        {/* Recipe Grid */}
         {loading ? (
-            <div className="text-center py-32 text-slate-400 animate-pulse">Loading delicious recipes...</div>
+            <div className="text-center py-32 text-slate-400 animate-pulse">Loading recipes...</div>
         ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {currentRecipes.length > 0 ? currentRecipes.map((recipe) => {
-                // Parse details safely
+              {filteredRecipes.length > 0 ? filteredRecipes.map((recipe) => {
+                // Safely parse details for preview stats
                 let details = {};
-                try {
-                    details = typeof recipe.details === 'string' ? JSON.parse(recipe.details || '{}') : recipe.details;
-                } catch(e) {}
-                
-                const prepTime = details?.prepTime || '15 min';
-                const calories = details?.calories || '300 kcal';
-                const servings = details?.servings || 1;
-                const ingredients = details?.ingredients || [];
+                try { details = JSON.parse(recipe.details || '{}'); } catch(e) {}
+                const cals = details?.nutrition?.calories || 'N/A';
+                const protein = details?.nutrition?.protein || 'N/A';
 
                 return (
-                  <div
-                    key={recipe.id}
-                    className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full"
-                  >
+                  <div key={recipe.id} className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full cursor-pointer" onClick={() => handleOpenRecipe(recipe)}>
                     <div className="h-48 bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center relative overflow-hidden">
                         {recipe.videoUrl ? (
-                             <img src={recipe.videoUrl} alt={recipe.title} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" onError={(e) => e.target.style.display='none'} />
+                             <img src={`https://img.youtube.com/vi/${recipe.videoUrl.split('v=')[1]?.split('&')[0] || ''}/mqdefault.jpg`} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" alt="Recipe" />
                         ) : (
-                             <div className="text-white opacity-80 group-hover:scale-110 transition-transform duration-500">
-                                 <UtensilsCrossed className="w-16 h-16" />
-                             </div>
+                             <div className="text-white opacity-80"><UtensilsCrossed className="w-16 h-16" /></div>
                         )}
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-emerald-700 shadow-lg">
-                            {recipe.difficultyLevel || 'EASY'}
-                        </div>
+                        {recipe.accessLevel === 'PREMIUM' && !user?.isPremium && (
+                            <div className="absolute top-4 right-4 bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-white shadow-lg flex items-center gap-1"><Lock className="w-3 h-3"/> PREMIUM</div>
+                        )}
                     </div>
                     
                     <div className="p-8 flex flex-col flex-grow">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl font-black text-slate-900 leading-tight">{recipe.title}</h3>
-                      </div>
+                      <h3 className="text-xl font-black text-slate-900 mb-2 leading-tight group-hover:text-emerald-600 transition-colors">{recipe.title}</h3>
+                      <p className="text-slate-500 text-sm mb-6 line-clamp-2">{recipe.description}</p>
                       
-                      <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-6">
-                        <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"><Clock className="w-3 h-3" /> {prepTime}</span>
-                        <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"><Flame className="w-3 h-3" /> {calories}</span>
-                        <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"><Users className="w-3 h-3" /> {servings}</span>
-                      </div>
-                      
-                      <p className="text-slate-600 mb-6 text-sm leading-relaxed line-clamp-2">{recipe.description}</p>
-                      
-                      <div className="mt-auto">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Key Ingredients</p>
-                        <div className="flex flex-wrap gap-2 mb-6">
-                          {ingredients.slice(0, 3).map((ing, i) => (
-                            <span key={i} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-xs font-semibold border border-emerald-100">
-                              {ing}
-                            </span>
-                          ))}
-                          {ingredients.length > 3 && <span className="px-2 py-1 text-xs text-slate-400">+{ingredients.length - 3} more</span>}
-                        </div>
-                        
-                        <button 
-                          className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 hover:shadow-lg transition-all flex items-center justify-center gap-2 group-hover:bg-emerald-600"
-                          onClick={() => setSelectedRecipe(recipe)}
-                        >
-                          <Play className="w-4 h-4 fill-current" /> Start Cooking
-                        </button>
+                      <div className="mt-auto flex items-center gap-4 text-xs font-bold text-slate-400">
+                         <span className="flex items-center gap-1"><Flame className="w-3 h-3 text-orange-500"/> {cals} kcal</span>
+                         <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3 text-blue-500"/> {protein}g Protein</span>
                       </div>
                     </div>
                   </div>

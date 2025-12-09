@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Users, Dumbbell, Activity, PlusCircle, Trash2, BookOpen, LogOut, LayoutGrid, Coffee, Search, Ban, CheckCircle, MoreVertical, DollarSign, Mail, MessageSquare, Pencil, X, RotateCcw, Filter, Crown, TrendingUp } from 'lucide-react';
+import { Users, Dumbbell, Activity, PlusCircle, Trash2, BookOpen, LogOut, LayoutGrid, Coffee, Search, Ban, CheckCircle,Flame, DollarSign, Mail, MessageSquare, Pencil, X, RotateCcw, Filter, Crown, TrendingUp } from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
 
 export function AdminDashboard() {
@@ -31,6 +31,9 @@ export function AdminDashboard() {
         videoUrl: '', sets: 3, reps: '12', restTimeSeconds: 60
     });
 
+     // Recipe Specific
+    const [nutrition, setNutrition] = useState({ calories: '', protein: '', fats: '', carbs: '' });
+
     const fetchData = useCallback(() => {
         fetch('http://localhost:8080/api/users').then(res => res.json()).then(setUsers);
         fetch('http://localhost:8080/api/payments').then(res => res.json()).then(setPayments);
@@ -52,8 +55,9 @@ export function AdminDashboard() {
         setNewItem({ 
             title: '', description: '', contentType: 'WORKOUT', category: '',
             difficultyLevel: 'BEGINNER', accessLevel: 'FREE', durationMinutes: 15,
-            videoUrl: '', sets: 3, reps: '12', restTimeSeconds: 60
+            videoUrl: '', sets: 3, reps: '12', restTimeSeconds: 60, details: ''
         });
+        setNutrition({ calories: '', protein: '', fats: '', carbs: '' });
         setIsEditing(false);
         setEditingId(null);
     };
@@ -65,24 +69,26 @@ export function AdminDashboard() {
                      activeTab === 'recipes' ? 'RECIPE' : 
                      activeTab === 'tips' ? 'STUDY_TIP' : newItem.contentType;
         
-        const payload = { ...newItem, contentType: type };
-
-        if (isEditing && editingId) {
-            await fetch(`http://localhost:8080/api/content/${editingId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            alert("Updated Successfully!");
-        } else {
-            await fetch('http://localhost:8080/api/content', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            alert("Added Successfully!");
+        let finalDetails = newItem.details;
+        if (type === 'RECIPE') {
+            const currentDetails = newItem.details ? JSON.parse(newItem.details) : {};
+            finalDetails = JSON.stringify({ ...currentDetails, nutrition });
         }
+
+        const payload = { ...newItem, contentType: type, details: finalDetails };
+
+        const url = isEditing 
+            ? `http://localhost:8080/api/content/${editingId}`
+            : 'http://localhost:8080/api/content';
+        const method = isEditing ? 'PUT' : 'POST';
+
+        await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
         
+        alert(isEditing ? "Updated Successfully!" : "Added Successfully!");
         fetchData();
         resetForm();
     };
@@ -91,9 +97,18 @@ export function AdminDashboard() {
         setNewItem(item);
         setEditingId(item.id);
         setIsEditing(true);
+
+        if (item.contentType === 'RECIPE' && item.details) {
+            try {
+                const d = JSON.parse(item.details);
+                if (d.nutrition) setNutrition(d.nutrition);
+            } catch (e) {}
+        }
+
         if (item.contentType === 'WORKOUT') setActiveTab('workouts');
         else if (item.contentType === 'RECIPE') setActiveTab('recipes');
         else if (item.contentType === 'STUDY_TIP') setActiveTab('tips');
+        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -591,59 +606,117 @@ export function AdminDashboard() {
                 )}
 
                 {/* --- TIPS & RECIPES TAB (SEPARATED) --- */}
-                {(activeTab === 'tips' || activeTab === 'recipes') && (
-                    <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit sticky top-6 lg:col-span-1">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="font-bold text-lg flex items-center gap-2 text-slate-800">
-                                    <div className={`p-2 rounded-lg ${activeTab === 'tips' ? 'bg-purple-100 text-purple-600' : 'bg-green-100 text-green-600'}`}>
-                                        <PlusCircle className="w-5 h-5"/>
-                                    </div>
-                                    {isEditing ? 'Edit Item' : `Add ${activeTab === 'tips' ? 'Tip' : 'Recipe'}`}
+                {/* --- RECIPES TAB --- */}
+                {activeTab === 'recipes' && (
+                    <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">
+                        <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-200 h-fit sticky top-6 lg:col-span-1">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800">
+                                    <div className="p-2 bg-green-100 text-green-600 rounded-xl"><Coffee className="w-6 h-6"/></div>
+                                    {isEditing ? 'Edit Recipe' : 'Add Recipe'}
                                 </h3>
-                                {isEditing && (
-                                    <button onClick={resetForm} className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-lg">
-                                        <X className="w-3 h-3" /> Cancel
-                                    </button>
-                                )}
+                                {isEditing && <button onClick={resetForm} className="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg">Cancel</button>}
                             </div>
+                            
                             <form onSubmit={handleSave} className="space-y-5">
-                                <Input label="Title" val={newItem.title} set={v => setNewItem({...newItem, title: v})} />
-                                <TextArea label="Content / Steps" val={newItem.description} set={v => setNewItem({...newItem, description: v})} />
+                                <Input label="Recipe Title" val={newItem.title} set={v => setNewItem({...newItem, title: v})} />
+                                <Input label="YouTube Video URL" val={newItem.videoUrl} set={v => setNewItem({...newItem, videoUrl: v})} placeholder="youtube.com/watch?v=... or /shorts/..." />
+                                <TextArea label="Description / Instructions" val={newItem.description} set={v => setNewItem({...newItem, description: v})} />
+                                
+                                <div className="bg-green-50 p-4 rounded-xl border border-green-100 space-y-3">
+                                    <h4 className="text-xs font-bold text-green-700 uppercase tracking-wide flex items-center gap-2"><Flame className="w-3 h-3"/> Nutritional Info</h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Input label="Calories (kcal)" type="number" val={nutrition.calories} set={v => setNutrition({...nutrition, calories: v})} placeholder="0" />
+                                        <Input label="Protein (g)" type="number" val={nutrition.protein} set={v => setNutrition({...nutrition, protein: v})} placeholder="0" />
+                                        <Input label="Fats (g)" type="number" val={nutrition.fats} set={v => setNutrition({...nutrition, fats: v})} placeholder="0" />
+                                        <Input label="Carbs (g)" type="number" val={nutrition.carbs} set={v => setNutrition({...nutrition, carbs: v})} placeholder="0" />
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Category</label>
-                                    <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-blue-500 transition-all text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Category</label>
+                                    <select className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-green-500 text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
                                         <option value="">Select Category</option>
-                                        {getCurrentFormCategories().map(c => <option key={c} value={c}>{c}</option>)}
+                                        {RECIPE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <Select label="Access" val={newItem.accessLevel} set={v => setNewItem({...newItem, accessLevel: v})} opts={['FREE','PREMIUM']} />
-                                <button className={`w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 mt-4 ${activeTab === 'tips' ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'}`}>
-                                    {isEditing ? 'Update' : 'Publish'}
+                                <button className="w-full py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition-all active:scale-95 mt-4">
+                                    {isEditing ? 'Update Recipe' : 'Publish Recipe'}
                                 </button>
                             </form>
                         </div>
-                        <div className="lg:col-span-2 flex flex-col h-full">
+                        
+                        <div className="lg:col-span-2 space-y-6">
+                            {getFilteredContent('RECIPE').map(item => (
+                                <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex justify-between items-center hover:shadow-lg transition-all group">
+                                    <div className="flex gap-5 items-center">
+                                        <div className="p-4 rounded-2xl shrink-0 bg-green-50 text-green-600 border border-green-100"><Coffee className="w-8 h-8" /></div>
+                                        <div>
+                                            <h4 className="font-bold text-lg text-slate-900 mb-1">{item.title}</h4>
+                                            <div className="flex gap-2">
+                                                <Badge label={item.category} color="slate" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleEdit(item)} className="p-3 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all"><Pencil className="w-5 h-5"/></button>
+                                        <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* --- STUDY TIPS TAB (SEPARATED & UPDATED) --- */}
+                {activeTab === 'tips' && (
+                    <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">
+                        <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-200 h-fit sticky top-6 lg:col-span-1">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800">
+                                    <div className="p-2 bg-purple-100 text-purple-600 rounded-xl"><BookOpen className="w-6 h-6"/></div>
+                                    {isEditing ? 'Edit Tip' : 'Add Study Tip'}
+                                </h3>
+                                {isEditing && <button onClick={resetForm} className="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg">Cancel</button>}
+                            </div>
                             
-                            {/* --- NEW: FILTERS FOR TIPS/RECIPES --- */}
+                            <form onSubmit={handleSave} className="space-y-5">
+                                <Input label="Tip Title" val={newItem.title} set={v => setNewItem({...newItem, title: v})} />
+                                <Input label="YouTube Video URL" val={newItem.videoUrl} set={v => setNewItem({...newItem, videoUrl: v})} placeholder="youtube.com/watch?v=... or /shorts/..." />
+                                <TextArea label="Full Explanation (Blog Content)" val={newItem.description} set={v => setNewItem({...newItem, description: v})} />
+                                
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Category</label>
+                                    <select className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-purple-500 text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                                        <option value="">Select Category</option>
+                                        {STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                                <Select label="Access" val={newItem.accessLevel} set={v => setNewItem({...newItem, accessLevel: v})} opts={['FREE','PREMIUM']} />
+                                <button className="w-full py-4 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 transition-all active:scale-95 mt-4">
+                                    {isEditing ? 'Update Tip' : 'Publish Tip'}
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div className="lg:col-span-2 flex flex-col h-full">
+                            {/* TIPS FILTERS */}
                             <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center sticky top-0 z-10">
                                 <div className="flex items-center gap-2 text-slate-500 text-sm font-bold uppercase tracking-wider">
                                     <Filter className="w-4 h-4" /> Filters:
                                 </div>
                                 <div className="flex gap-3">
                                     <select 
-                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
                                         value={studyCategoryFilter}
                                         onChange={(e) => setStudyCategoryFilter(e.target.value)}
                                     >
                                         <option value="ALL">All Categories</option>
-                                        {activeTab === 'tips' 
-                                            ? STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)
-                                            : RECIPE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)
-                                        }
+                                        {STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                     <select 
-                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-slate-100 transition-colors"
+                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
                                         value={studyAccessFilter}
                                         onChange={(e) => setStudyAccessFilter(e.target.value)}
                                     >
@@ -653,17 +726,15 @@ export function AdminDashboard() {
                                     </select>
                                 </div>
                                 <span className="ml-auto text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                    {getFilteredContent(activeTab === 'tips' ? 'STUDY_TIP' : 'RECIPE').length} Items
+                                    {getFilteredContent('STUDY_TIP').length} Items
                                 </span >
                             </div>
 
                             <div className="space-y-4 overflow-y-auto max-h-[800px] pr-2 pb-20 custom-scrollbar">
-                                {getFilteredContent(activeTab === 'tips' ? 'STUDY_TIP' : 'RECIPE').map(item => (
-                                    <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex justify-between items-center hover:shadow-lg transition-all duration-300 group">
+                                {getFilteredContent('STUDY_TIP').map(item => (
+                                    <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex justify-between items-center hover:shadow-lg transition-all group">
                                         <div className="flex gap-5 items-center">
-                                            <div className={`p-4 rounded-2xl shrink-0 ${activeTab === 'tips' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                                                {activeTab === 'tips' ? <BookOpen className="w-6 h-6" /> : <Coffee className="w-6 h-6" />}
-                                            </div>
+                                            <div className="p-4 rounded-2xl shrink-0 bg-purple-50 text-purple-600 border border-purple-100"><BookOpen className="w-8 h-8" /></div>
                                             <div>
                                                 <div className="flex items-center gap-3 mb-1">
                                                     <h4 className="font-bold text-lg text-slate-900 mb-1">{item.title}</h4>
@@ -674,25 +745,22 @@ export function AdminDashboard() {
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <button onClick={() => handleEdit(item)} className={`p-3 text-slate-400 rounded-xl transition-all ${activeTab === 'tips' ? 'hover:text-purple-600 hover:bg-purple-50' : 'hover:text-green-600 hover:bg-green-50'}`}>
-                                                <Pencil className="w-5 h-5"/>
-                                            </button>
-                                            <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
-                                                <Trash2 className="w-5 h-5"/>
-                                            </button>
+                                            <button onClick={() => handleEdit(item)} className="p-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"><Pencil className="w-5 h-5"/></button>
+                                            <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>
                                         </div>
                                     </div>
                                 ))}
-                                {getFilteredContent(activeTab === 'tips' ? 'STUDY_TIP' : 'RECIPE').length === 0 && (
+                                {getFilteredContent('STUDY_TIP').length === 0 && (
                                     <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-3xl">
-                                        <p className="text-slate-500 font-bold">No items found.</p>
-                                        <button onClick={() => {setStudyCategoryFilter('ALL'); setStudyAccessFilter('ALL');}} className="text-blue-600 text-sm font-bold mt-2 hover:underline">Clear Filters</button>
+                                        <p className="text-slate-500 font-bold">No tips found.</p>
+                                        <button onClick={() => {setStudyCategoryFilter('ALL'); setStudyAccessFilter('ALL');}} className="text-purple-600 text-sm font-bold mt-2 hover:underline">Clear Filters</button>
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
                 )}
+
             </main>
         </div>
     );
