@@ -33,6 +33,10 @@ public class Content {
 
     private LocalDate uploadDate;
 
+    // This will store JSON data like: { "benefits": [], "steps": [] }
+    @Column(columnDefinition = "TEXT") 
+    private String details; 
+
     @PrePersist
     protected void onCreate() {
         this.uploadDate = LocalDate.now();
