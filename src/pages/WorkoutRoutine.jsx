@@ -8,9 +8,23 @@ const getEmbedUrl = (url) => {
     if (!url) return null;
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
         if (url.includes('embed')) return url;
-        const videoId = url.split('v=')[1]?.split('&')[0];
-        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
-        if (url.includes('youtu.be')) return `https://www.youtube.com/embed/${url.split('/').pop()?.split('?')[0]}`;
+
+        // 1. Handle YouTube Shorts
+        if (url.includes('/shorts/')) {
+            const videoId = url.split('/shorts/')[1]?.split('?')[0];
+            return `https://www.youtube.com/embed/${videoId}`;
+        }
+
+        // 2. Handle Standard Watch URLs (v=)
+        if (url.includes('v=')) {
+            const videoId = url.split('v=')[1]?.split('&')[0];
+            return `https://www.youtube.com/embed/${videoId}`;
+        }
+
+        // 3. Handle Shortened Links (youtu.be)
+        if (url.includes('youtu.be')) {
+             return `https://www.youtube.com/embed/${url.split('/').pop()?.split('?')[0]}`;
+        }
     }
     return null; 
 };
