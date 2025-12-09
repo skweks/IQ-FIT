@@ -55,6 +55,63 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
        // Simulation or API call logic here
+      // 1. Call the backend login API
+      const response = await fetch('http://localhost:8080/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!response.ok) {
+        // Handle 401 Unauthorized or other errors from the backend
+        const errorText = await response.text();
+        throw new Error(errorText || 'Login failed: Invalid credentials');
+      }
+
+      const userData = await response.json();
+      
+      // The backend response should contain the full user object including 'isPremium' and 'role'
+      setUser(userData);
+      localStorage.setItem('iqfit_user', JSON.stringify(userData));
+
+    } catch (error) {
+      console.error("Login failed:", error);
+      // Re-throw the error so the UI (LoginPage) can handle it
+      throw error; 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (email, password, fullName) => {
+    setIsLoading(true);
+    try {
+      // 1. Call the backend registration API
+      const response = await fetch('http://localhost:8080/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // NOTE: The backend expects fullName, email, and password
+        body: JSON.stringify({ fullName, email, password }) 
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Registration failed.');
+      }
+
+      const userData = await response.json();
+
+      setUser(userData);
+      localStorage.setItem('iqfit_user', JSON.stringify(userData));
+
+      // Reset stats for new user
+      const initialStats = { workouts: 0, studySessions: 0, recipesTried: 0 };
+      setStats(initialStats);
+      localStorage.setItem('iqfit_stats', JSON.stringify(initialStats));
+      
+    } catch (error) {
+      console.error("Registration failed:", error);
+      throw error;
     } finally {
        setIsLoading(false);
     }
