@@ -54,6 +54,10 @@ public class ContentController {
         content.setReps(contentDetails.getReps());
         content.setRestTimeSeconds(contentDetails.getRestTimeSeconds());
 
+        // --- NEW ---
+        content.setDetails(contentDetails.getDetails());
+        // -----------
+
         return contentRepository.save(content);
     }
 }
