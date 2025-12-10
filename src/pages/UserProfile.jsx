@@ -241,7 +241,16 @@ export function UserProfile() {
                      ) : (
                         <>
                             <button onClick={() => setIsEditing(false)} className="px-6 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700">Cancel</button>
-                            <button onClick={handleSave} disabled={isLoading} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-all shadow-lg flex items-center gap-2">
+                            <button 
+                                onClick={handleSave} 
+                                // Add validation checks here:
+                                disabled={isLoading || !weight || weight <= 0 || !height || height <= 0} 
+                                className={`px-6 py-3 font-bold rounded-xl shadow-lg flex items-center gap-2 transition-all ${
+                                    // Optional: Change styling when disabled to look "grayed out"
+                                    (isLoading || !weight || weight <= 0) 
+                                        ? 'bg-slate-400 text-slate-200 cursor-not-allowed' 
+                                        : 'bg-blue-600 text-white hover:bg-blue-500'
+                                }`}>
                                 {isLoading ? 'Saving...' : <><Save className="w-4 h-4" /> Save Changes</>}
                             </button>
                         </>
@@ -341,7 +350,7 @@ export function UserProfile() {
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6">
-                                <Input label="Weight (kg)" val={weight} set={setWeight} edit={isEditing} icon={Scale} type="number" placeholder="0" />
+                                      <Input label="Weight (kg)" val={weight} set={setWeight} edit={isEditing} icon={Scale} type="number" placeholder="0" disabled={weight === 0} />
                                 <Input label="Height (cm)" val={height} set={setHeight} edit={isEditing} icon={Ruler} type="number" placeholder="0" />
                             </div>
                         </div>
@@ -446,13 +455,25 @@ export function UserProfile() {
   );
 }
 
-const Input = ({ label, val, set, edit, icon: Icon, type="text", placeholder="" }) => (
+const Input = ({ label, val, set, edit, icon: Icon, type="text", placeholder="", disabled }) => (
     <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1 flex items-center gap-2"><Icon className="w-3 h-3"/> {label}</label>
+        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1 flex items-center gap-2">
+            <Icon className="w-3 h-3"/> {label}
+        </label>
         {edit ? (
-            <input type={type} value={val} onChange={(e) => set(e.target.value)} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-slate-900" placeholder={placeholder} />
+            <input 
+                type={type} 
+                value={val} 
+                onChange={(e) => set(e.target.value)}
+                // 2. Pass it to the actual HTML input here vvv
+                disabled={disabled}
+                className={`w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-slate-900 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                placeholder={placeholder} 
+            />
         ) : (
-            <p className="text-lg font-medium text-slate-900 p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">{val || <span className="text-slate-400 italic">Not set</span>}</p>
+            <p className="text-lg font-medium text-slate-900 p-3.5 bg-slate-50 rounded-xl border border-slate-100/50">
+                {val || <span className="text-slate-400 italic">Not set</span>}
+            </p>
         )}
     </div>
 );

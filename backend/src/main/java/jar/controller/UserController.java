@@ -36,26 +36,15 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail());
-        if (user == null) return ResponseEntity.status(401).body("User not found");
-        if (user.getPassword().equals(loginRequest.getPassword())) return ResponseEntity.ok(user);
-        else return ResponseEntity.status(401).body("Invalid email or password");
-
+        
         if (user == null) {
-            System.out.println("❌ User NOT found in database.");
             return ResponseEntity.status(401).body("User not found");
         }
 
-        // DEBUG: Check passwords
-        // System.out.println(" DB Password: " + user.getPassword()); // Uncomment for
-        // debugging
-
-        // Check if user exists AND if the password matches
         if (user.getPassword().equals(loginRequest.getPassword())) {
-            System.out.println("✅ Password Matches! Login Success.");
-            return ResponseEntity.ok(user); // Success: Return the user
+            return ResponseEntity.ok(user);
         } else {
-            System.out.println("❌ Password Mismatch.");
-            return ResponseEntity.status(401).body("Invalid email or password"); // Failure
+            return ResponseEntity.status(401).body("Invalid email or password");
         }
     }
 
@@ -66,7 +55,7 @@ public class UserController {
 
     @PutMapping("/{id}/suspend")
     public User toggleSuspendUser(@PathVariable Long id) {
-        User user = userRepository.findById(id).orElseThrow();
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
         user.setSuspended(!user.isSuspended());
         return userRepository.save(user);
     }
@@ -74,10 +63,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Update Personal Details
         user.setFullName(userDetails.getFullName());
         user.setEmail(userDetails.getEmail());
         user.setGender(userDetails.getGender());
@@ -85,6 +71,7 @@ public class UserController {
         user.setBio(userDetails.getBio());
         user.setWeight(userDetails.getWeight());
         user.setHeight(userDetails.getHeight());
+        
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
             user.setPassword(userDetails.getPassword());
         }
@@ -92,15 +79,15 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    // --- NEW: MANAGE SUBSCRIPTION STATUS (Cancel/Upgrade) ---
+    // --- MANAGE SUBSCRIPTION STATUS (Cancel/Upgrade via Query Param) ---
     @PutMapping("/{id}/subscription")
     public ResponseEntity<User> updateSubscriptionStatus(@PathVariable Long id, @RequestParam boolean isPremium) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-        user.setPremium(isPremium); // Updates the DB
+        user.setPremium(isPremium);
         return ResponseEntity.ok(userRepository.save(user));
     }
-    // --------------------------------------------------------
 
+    // --- GET USER STATS ---
     @GetMapping("/{id}/stats")
     public ResponseEntity<Map<String, Long>> getUserStats(@PathVariable Long id) {
         long workouts = activityLogRepository.countByUserIdAndStatusAndContentContentType(id, "COMPLETED", "WORKOUT");
@@ -113,6 +100,9 @@ public class UserController {
         stats.put("recipesTried", recipes);
         
         return ResponseEntity.ok(stats);
+    } // <--- THIS BRACE WAS MISSING IN YOUR CODE
+
+    // --- UPDATE ROLE (Promote/Demote) ---
     @PutMapping("/{id}/role")
     public ResponseEntity<User> updateRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
         String newRole = request.get("role");
@@ -123,16 +113,12 @@ public class UserController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // Endpoint to update a user's premium status
+    // --- UPDATE PREMIUM STATUS (Grant/Revoke) ---
     @PutMapping("/{id}/premium")
     public ResponseEntity<User> updatePremiumStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> request) {
         Boolean isPremium = request.get("isPremium");
         return userRepository.findById(id).map(user -> {
             user.setPremium(isPremium);
-
-            // Log the change for audit purposes (optional, but good practice)
-            System.out.println("Admin updated user " + id + " premium status to: " + isPremium);
-
             User updatedUser = userRepository.save(user);
             return ResponseEntity.ok(updatedUser);
         }).orElse(ResponseEntity.notFound().build());

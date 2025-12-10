@@ -1,44 +1,103 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Users, Dumbbell, Activity, PlusCircle, Trash2, BookOpen, LogOut, LayoutGrid, Coffee, Search, Ban, CheckCircle,Flame, DollarSign, Mail, MessageSquare, Pencil, X, RotateCcw, Filter, Crown, TrendingUp } from 'lucide-react';
+import { 
+    Users, Dumbbell, Activity, PlusCircle, Trash2, BookOpen, LogOut, LayoutGrid, 
+    Coffee, Search, Ban, CheckCircle, Flame, DollarSign, Mail, MessageSquare, 
+    Pencil, X, RotateCcw, Filter, Crown, TrendingUp, Shield, MoreVertical 
+} from 'lucide-react';
 import { useNavigate } from '../hooks/useNavigate';
 
+const API_URL = 'http://localhost:8080/api';
+
+// --- TOAST NOTIFICATION COMPONENT ---
+const ToastNotification = ({ message, type, onClose }) => {
+    if (!message) return null;
+
+    let icon, colorClasses, title;
+
+    switch (type) {
+        case 'success':
+            icon = <CheckCircle className="w-5 h-5 text-emerald-600" />;
+            colorClasses = "border-emerald-500 bg-emerald-50";
+            title = "Success";
+            break;
+        case 'error':
+            icon = <X className="w-5 h-5 text-red-600" />;
+            colorClasses = "border-red-500 bg-red-50";
+            title = "Error";
+            break;
+        case 'info':
+        default:
+            icon = <MoreVertical className="w-5 h-5 text-blue-600" />;
+            colorClasses = "border-blue-500 bg-blue-50";
+            title = "Info";
+            break;
+    }
+
+    return (
+        <div className="fixed top-6 right-6 z-50 transition-all duration-500 animate-in slide-in-from-right-10 fade-in">
+            <div className={`w-full max-w-sm border-l-4 shadow-2xl rounded-xl p-4 flex items-start gap-4 ${colorClasses}`}>
+                <div className="p-2 rounded-full shrink-0">
+                    {icon}
+                </div>
+                <div className="flex-1">
+                    <h4 className="font-bold text-slate-800 text-sm mb-0.5">{title}</h4>
+                    <p className="text-slate-600 text-xs leading-relaxed">{message}</p>
+                </div>
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    );
+};
+
 export function AdminDashboard() {
+    const navigate = useNavigate();
+
+    // --- MAIN STATE ---
     const [users, setUsers] = useState([]);
     const [payments, setPayments] = useState([]);
     const [content, setContent] = useState([]);
     const [messages, setMessages] = useState([]);
+    
+    // UI State
     const [activeTab, setActiveTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [userFilter, setUserFilter] = useState('ALL');
     
-    // WORKOUT LIST FILTERS
+    // Filters
     const [workoutCategoryFilter, setWorkoutCategoryFilter] = useState('ALL');
     const [workoutAccessFilter, setWorkoutAccessFilter] = useState('ALL');
-
-    const navigate = useNavigate();
-
-        // NEW: Study Tips Filters (Matches StudyTips.jsx)
     const [studyCategoryFilter, setStudyCategoryFilter] = useState('ALL');
     const [studyAccessFilter, setStudyAccessFilter] = useState('ALL');
+
+    // Modals & Toasts
+    const [toast, setToast] = useState({ message: '', type: 'info' });
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false, title: '', message: '', type: 'info', onConfirm: () => {}
+    });
 
     // Form State
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    
     const [newItem, setNewItem] = useState({
         title: '', description: '', contentType: 'WORKOUT', category: '',
         difficultyLevel: 'BEGINNER', accessLevel: 'FREE', durationMinutes: 15,
-        videoUrl: '', sets: 3, reps: '12', restTimeSeconds: 60
+        videoUrl: '', sets: 3, reps: '12', restTimeSeconds: 60, details: ''
     });
-
-     // Recipe Specific
     const [nutrition, setNutrition] = useState({ calories: '', protein: '', fats: '', carbs: '' });
 
+    // --- UTILS ---
+    const showToast = useCallback((message, type) => {
+        setToast({ message, type });
+        setTimeout(() => setToast({ message: '', type: 'info' }), 4000); // Auto hide
+    }, []);
+
     const fetchData = useCallback(() => {
-        fetch('http://localhost:8080/api/users').then(res => res.json()).then(setUsers);
-        fetch('http://localhost:8080/api/payments').then(res => res.json()).then(setPayments);
-        fetch('http://localhost:8080/api/content').then(res => res.json()).then(setContent);
-        fetch('http://localhost:8080/api/messages').then(res => res.json()).then(setMessages);
+        fetch(`${API_URL}/users`).then(res => res.json()).then(setUsers).catch(console.error);
+        fetch(`${API_URL}/payments`).then(res => res.json()).then(setPayments).catch(console.error);
+        fetch(`${API_URL}/content`).then(res => res.json()).then(setContent).catch(console.error);
+        fetch(`${API_URL}/messages`).then(res => res.json()).then(setMessages).catch(console.error);
     }, []);
 
     useEffect(() => {
@@ -50,7 +109,6 @@ export function AdminDashboard() {
         fetchData();
     }, [navigate, fetchData]);
 
-    // --- HELPER: Reset Form ---
     const resetForm = () => {
         setNewItem({ 
             title: '', description: '', contentType: 'WORKOUT', category: '',
@@ -62,7 +120,7 @@ export function AdminDashboard() {
         setEditingId(null);
     };
 
-    // --- ACTIONS ---
+    // --- CRUD ACTIONS ---
     const handleSave = async (e) => {
         e.preventDefault();
         const type = activeTab === 'workouts' ? 'WORKOUT' : 
@@ -76,21 +134,26 @@ export function AdminDashboard() {
         }
 
         const payload = { ...newItem, contentType: type, details: finalDetails };
-
-        const url = isEditing 
-            ? `http://localhost:8080/api/content/${editingId}`
-            : 'http://localhost:8080/api/content';
+        const url = isEditing ? `${API_URL}/content/${editingId}` : `${API_URL}/content`;
         const method = isEditing ? 'PUT' : 'POST';
 
-        await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        alert(isEditing ? "Updated Successfully!" : "Added Successfully!");
-        fetchData();
-        resetForm();
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                showToast(isEditing ? "Content updated successfully!" : "Content added successfully!", 'success');
+                fetchData();
+                resetForm();
+            } else {
+                throw new Error("Failed to save");
+            }
+        } catch (error) {
+            showToast("Failed to save content. Please try again.", 'error');
+        }
     };
 
     const handleEdit = (item) => {
@@ -112,71 +175,149 @@ export function AdminDashboard() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDelete = async (id) => {
-        if(window.confirm("Delete this item?")) {
-            await fetch(`http://localhost:8080/api/content/${id}`, { method: 'DELETE' });
-            fetchData();
-            if (editingId === id) resetForm();
-        }
+    const confirmAndDelete = (id, endpoint, successMsg) => {
+        setConfirmModal({
+            isOpen: true,
+            title: "Confirm Deletion",
+            message: "Are you sure you want to permanently delete this item? This cannot be undone.",
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await fetch(`${API_URL}/${endpoint}/${id}`, { method: 'DELETE' });
+                    fetchData();
+                    if (editingId === id) resetForm();
+                    showToast(successMsg, 'success');
+                } catch (e) {
+                    showToast("Deletion failed.", 'error');
+                }
+            }
+        });
     };
 
-    const handleSuspendUser = async (id) => {
-        await fetch(`http://localhost:8080/api/users/${id}/suspend`, { method: 'PUT' });
-        fetchData();
+    const handleDeleteContent = (id) => confirmAndDelete(id, 'content', 'Content deleted successfully.');
+    const handleDeleteMessage = (id) => confirmAndDelete(id, 'messages', 'Message deleted successfully.');
+    const handleDeleteUser = (id) => confirmAndDelete(id, 'users', 'User account deleted successfully.');
+
+    // --- USER MANAGEMENT ACTIONS ---
+    const handleSuspendUser = (id, currentStatus) => {
+        setConfirmModal({
+            isOpen: true,
+            title: currentStatus ? "Activate User" : "Suspend User",
+            message: `Are you sure you want to ${currentStatus ? "activate" : "suspend"} this user?`,
+            type: currentStatus ? 'info' : 'danger',
+            onConfirm: async () => {
+                try {
+                    await fetch(`${API_URL}/users/${id}/suspend`, { method: 'PUT' });
+                    fetchData();
+                    showToast(`User ${currentStatus ? "activated" : "suspended"} successfully.`, 'success');
+                } catch (e) {
+                    showToast("Action failed.", 'error');
+                }
+            }
+        });
     };
 
-    const handleDeleteUser = async (id) => {
-        if(window.confirm("Permanently delete this user?")) {
-            await fetch(`http://localhost:8080/api/users/${id}`, { method: 'DELETE' });
-            fetchData();
-        }
+    const handleUpdateUserRole = (userId, currentRole) => {
+        const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
+        setConfirmModal({
+            isOpen: true,
+            title: newRole === 'ADMIN' ? "Promote to Admin" : "Demote to User",
+            message: `Are you sure you want to change this user's role to ${newRole}?`,
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`${API_URL}/users/${userId}/role`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: newRole })
+                    });
+                    if (!res.ok) throw new Error();
+                    fetchData();
+                    showToast(`User role updated to ${newRole}.`, 'success');
+                } catch (e) {
+                    showToast("Failed to update role. Check server console.", 'error');
+                }
+            }
+        });
     };
 
-    const handleDeleteMessage = async (id) => {
-        if(window.confirm("Delete this message?")) {
-            await fetch(`http://localhost:8080/api/messages/${id}`, { method: 'DELETE' });
-            fetchData();
-        }
+    const handleUpdatePremiumStatus = (userId, currentIsPremium) => {
+        const newStatus = !currentIsPremium;
+        setConfirmModal({
+            isOpen: true,
+            title: newStatus ? "Grant Premium Access" : "Revoke Premium Access",
+            message: `Are you sure you want to ${newStatus ? "grant" : "revoke"} premium features for this user?`,
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`${API_URL}/users/${userId}/premium`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isPremium: newStatus })
+                    });
+                    if (!res.ok) throw new Error();
+                    fetchData();
+                    showToast(`User premium status ${newStatus ? "granted" : "revoked"}.`, 'success');
+                } catch (e) {
+                    showToast("Failed to update subscription.", 'error');
+                }
+            }
+        });
     };
 
+    // --- FILTERING ---
     const getFilteredContent = (type) => {
         let filtered = content.filter(c => c.contentType === type);
-        
         if (type === 'WORKOUT') {
-            if (workoutCategoryFilter !== 'ALL') {
-                filtered = filtered.filter(c => c.category === workoutCategoryFilter);
-            }
-            if (workoutAccessFilter !== 'ALL') {
-                filtered = filtered.filter(c => c.accessLevel === workoutAccessFilter);
-            }
+            if (workoutCategoryFilter !== 'ALL') filtered = filtered.filter(c => c.category === workoutCategoryFilter);
+            if (workoutAccessFilter !== 'ALL') filtered = filtered.filter(c => c.accessLevel === workoutAccessFilter);
+        } else if (type === 'STUDY_TIP') {
+            if (studyCategoryFilter !== 'ALL') filtered = filtered.filter(c => c.category === studyCategoryFilter);
+            if (studyAccessFilter !== 'ALL') filtered = filtered.filter(c => c.accessLevel === studyAccessFilter);
         }
         return filtered;
     };
     
     const filteredUsers = users.filter(u => {
-        const matchesSearch = u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              u.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              u.email?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = userFilter === 'ALL' ? true : userFilter === 'PREMIUM' ? u.isPremium : !u.isPremium;
         return matchesSearch && matchesFilter;
     });
 
     const WORKOUT_CATEGORIES = ['FULL BODY', 'PUSH', 'PULL', 'LEGS', 'CHEST', 'ARMS', 'CORE', 'CARDIO'];
-    // UPDATED: Matched exactly with StudyTips.jsx
     const STUDY_CATEGORIES = ['Time Management', 'Memory', 'Focus', 'Learning Strategy', 'Understanding', 'Organization', 'Productivity', 'Reading', 'Wellness'];
     const RECIPE_CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Smoothie', 'High Protein'];
 
+    // --- CONFIRM MODAL COMPONENT ---
+    const ConfirmActionModal = () => {
+        if (!confirmModal.isOpen) return null;
+        let icon = confirmModal.type === 'danger' ? <Ban className="w-8 h-8 text-red-600" /> : <Shield className="w-8 h-8 text-blue-600" />;
+        let btnColor = confirmModal.type === 'danger' ? "bg-red-600 hover:bg-red-700 shadow-red-500/30" : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/30";
 
-    // Helper to get current categories for the form dropdown
-    const getCurrentFormCategories = () => {
-        if (activeTab === 'workouts') return WORKOUT_CATEGORIES;
-        if (activeTab === 'tips') return STUDY_CATEGORIES;
-        if (activeTab === 'recipes') return RECIPE_CATEGORIES;
-        return [];
+        return (
+            <div className="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center border-t-8 border-slate-100 transition-all duration-300 transform scale-100">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-6">
+                        {icon}
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 mb-3">{confirmModal.title}</h3>
+                    <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">{confirmModal.message}</p>
+                    <div className="flex gap-4">
+                        <button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} className="w-1/2 py-3.5 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition-colors">Cancel</button>
+                        <button onClick={() => { confirmModal.onConfirm(); setConfirmModal(prev => ({ ...prev, isOpen: false })); }} className={`w-1/2 py-3.5 rounded-xl text-white font-bold transition-colors shadow-lg ${btnColor}`}>Confirm</button>
+                    </div>
+                </div>
+            </div>
+        );
     };
-
 
     return (
         <div className="min-h-screen bg-slate-100 flex font-sans text-slate-900">
+            {/* OVERLAYS */}
+            <ConfirmActionModal />
+            <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'info' })} />
+
             {/* Sidebar */}
             <aside className="w-72 bg-slate-900 text-white min-h-screen p-6 fixed flex flex-col shadow-2xl z-30">
                 <div className="flex items-center gap-3 mb-12 px-2">
@@ -234,7 +375,6 @@ export function AdminDashboard() {
                 {/* --- OVERVIEW TAB --- */}
                 {activeTab === 'overview' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* Top Stats Row */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             <StatCard title="Total Users" value={users.length} icon={Users} color="bg-blue-500" trend="+12%" />
                             <StatCard title="Workouts" value={getFilteredContent('WORKOUT').length} icon={Dumbbell} color="bg-purple-500" trend="+5" />
@@ -242,13 +382,11 @@ export function AdminDashboard() {
                             <StatCard title="Revenue" value={`$${payments.reduce((s, p) => s + p.amount, 0).toFixed(2)}`} icon={DollarSign} color="bg-emerald-500" trend="+8.5%" />
                         </div>
                         
-                        {/* Recent Activity & System Stats */}
                         <div className="grid lg:grid-cols-3 gap-8">
-                            {/* Recent Transactions */}
+                            {/* RECENT ACTIVITY */}
                             <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-bold text-lg text-slate-800">Recent Activity</h3>
-                                    <button className="text-sm text-blue-600 font-bold hover:underline">View All</button>
                                 </div>
                                 <div className="space-y-4">
                                     {payments.length === 0 ? (
@@ -257,12 +395,10 @@ export function AdminDashboard() {
                                         payments.slice(0, 5).map(payment => (
                                             <div key={payment.id} className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-2xl transition-colors border border-slate-100">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg shadow-sm">
-                                                        $
-                                                    </div>
+                                                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg shadow-sm">$</div>
                                                     <div>
                                                         <p className="text-sm font-bold text-slate-900">New Subscription</p>
-                                                        <p className="text-xs text-slate-500">{payment.user.fullName} bought a plan</p>
+                                                        <p className="text-xs text-slate-500">{payment.user?.fullName || 'User'} bought a plan</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
@@ -275,10 +411,9 @@ export function AdminDashboard() {
                                 </div>
                             </div>
 
-                            {/* System Health Card */}
+                            {/* SYSTEM HEALTH - RESTORED */}
                             <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl shadow-xl p-8 text-white relative overflow-hidden flex flex-col justify-between">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full opacity-20 blur-3xl -mr-16 -mt-16"></div>
-                                
                                 <div>
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
@@ -286,44 +421,24 @@ export function AdminDashboard() {
                                         </div>
                                         <h3 className="font-bold text-lg relative z-10">System Health</h3>
                                     </div>
-                                    
                                     <div className="space-y-8 relative z-10">
                                         <div>
-                                            <div className="flex justify-between text-sm mb-2">
-                                                <span className="text-slate-300 font-medium">Server Uptime</span>
-                                                <span className="font-bold text-emerald-400">99.9%</span>
-                                            </div>
-                                            <div className="w-full bg-slate-700/50 rounded-full h-2.5 backdrop-blur-sm">
-                                                <div className="bg-emerald-500 h-2.5 rounded-full w-[99%] shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                                            </div>
+                                            <div className="flex justify-between text-sm mb-2"><span className="text-slate-300 font-medium">Server Uptime</span><span className="font-bold text-emerald-400">99.9%</span></div>
+                                            <div className="w-full bg-slate-700/50 rounded-full h-2.5 backdrop-blur-sm"><div className="bg-emerald-500 h-2.5 rounded-full w-[99%] shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div></div>
                                         </div>
                                         <div>
-                                            <div className="flex justify-between text-sm mb-2">
-                                                <span className="text-slate-300 font-medium">Storage Used</span>
-                                                <span className="font-bold text-blue-400">45%</span>
-                                            </div>
-                                            <div className="w-full bg-slate-700/50 rounded-full h-2.5 backdrop-blur-sm">
-                                                <div className="bg-blue-500 h-2.5 rounded-full w-[45%] shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                                            </div>
+                                            <div className="flex justify-between text-sm mb-2"><span className="text-slate-300 font-medium">Storage Used</span><span className="font-bold text-blue-400">45%</span></div>
+                                            <div className="w-full bg-slate-700/50 rounded-full h-2.5 backdrop-blur-sm"><div className="bg-blue-500 h-2.5 rounded-full w-[45%] shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div></div>
                                         </div>
                                         <div>
-                                            <div className="flex justify-between text-sm mb-2">
-                                                <span className="text-slate-300 font-medium">Database Load</span>
-                                                <span className="font-bold text-purple-400">12%</span>
-                                            </div>
-                                            <div className="w-full bg-slate-700/50 rounded-full h-2.5 backdrop-blur-sm">
-                                                <div className="bg-purple-500 h-2.5 rounded-full w-[12%] shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
-                                            </div>
+                                            <div className="flex justify-between text-sm mb-2"><span className="text-slate-300 font-medium">Database Load</span><span className="font-bold text-purple-400">12%</span></div>
+                                            <div className="w-full bg-slate-700/50 rounded-full h-2.5 backdrop-blur-sm"><div className="bg-purple-500 h-2.5 rounded-full w-[12%] shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div></div>
                                         </div>
                                     </div>
                                 </div>
-                                
                                 <div className="mt-8 pt-6 border-t border-white/10 text-xs text-slate-400 flex justify-between items-center relative z-10">
                                     <span>Last updated: Just now</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <span className="text-emerald-400 font-bold">Online</span>
-                                    </div>
+                                    <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span className="text-emerald-400 font-bold">Online</span></div>
                                 </div>
                             </div>
                         </div>
@@ -339,26 +454,21 @@ export function AdminDashboard() {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full lg:w-auto">
-                                <div className="relative">
-                                    <select 
-                                        className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-medium cursor-pointer hover:bg-slate-100 transition-colors"
-                                        value={userFilter}
-                                        onChange={(e) => setUserFilter(e.target.value)}
-                                    >
-                                        <option value="ALL">All Plans</option>
-                                        <option value="FREE">Free Only</option>
-                                        <option value="PREMIUM">Premium Only</option>
-                                    </select>
-                                    <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                                </div>
+                                <select 
+                                    className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-medium cursor-pointer"
+                                    value={userFilter}
+                                    onChange={(e) => setUserFilter(e.target.value)}
+                                >
+                                    <option value="ALL">All Plans</option>
+                                    <option value="FREE">Free Only</option>
+                                    <option value="PREMIUM">Premium Only</option>
+                                </select>
                                 <div className="relative w-full sm:w-72 group">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input 
-                                        type="text" 
-                                        placeholder="Search users..." 
+                                        type="text" placeholder="Search users..." 
                                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
                             </div>
@@ -380,7 +490,7 @@ export function AdminDashboard() {
                                             <td className="p-5 pl-8">
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${user.role === 'ADMIN' ? 'bg-gradient-to-br from-purple-500 to-indigo-600' : 'bg-gradient-to-br from-blue-500 to-cyan-500'}`}>
-                                                        {user.fullName.charAt(0)}
+                                                        {user.fullName?.charAt(0) || 'U'}
                                                     </div>
                                                     <div>
                                                         <div className="font-bold text-slate-900">{user.fullName}</div>
@@ -395,45 +505,38 @@ export function AdminDashboard() {
                                             </td>
                                             <td className="p-5">
                                                 {user.isPremium ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                                                        <Crown className="w-3 h-3 fill-current" /> PREMIUM
-                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200"><Crown className="w-3 h-3 fill-current" /> PREMIUM</span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                        FREE
-                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">FREE</span>
                                                 )}
                                             </td>
                                             <td className="p-5">
                                                 {user.suspended ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-600 border border-red-100">
-                                                        <Ban className="w-3 h-3" /> Suspended
-                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-600 border border-red-100"><Ban className="w-3 h-3" /> Suspended</span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                                        <CheckCircle className="w-3 h-3" /> Active
-                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100"><CheckCircle className="w-3 h-3" /> Active</span>
                                                 )}
                                             </td>
                                             <td className="p-5 pr-8 text-right">
-                                                {user.role !== 'ADMIN' && (
-                                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button 
-                                                            onClick={() => handleSuspendUser(user.id)}
-                                                            className={`p-2 rounded-lg transition-colors ${user.suspended ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
-                                                            title={user.suspended ? "Activate" : "Suspend"}
-                                                        >
-                                                            {user.suspended ? <CheckCircle className="w-4 h-4"/> : <Ban className="w-4 h-4"/>}
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => handleDeleteUser(user.id)}
-                                                            className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                                            title="Delete User"
-                                                        >
-                                                            <Trash2 className="w-4 h-4"/>
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {/* PROMOTION BUTTON (Role Toggle) */}
+                                                    <button onClick={() => handleUpdateUserRole(user.id, user.role)} className={`p-2 rounded-lg transition-colors text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-500 text-white hover:bg-purple-600' : 'bg-red-500 text-white hover:bg-red-600'}`} title={user.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin'}>
+                                                        <Shield className="w-4 h-4" />
+                                                    </button>
+                                                    
+                                                    {/* PLAN BUTTON (Premium Toggle) */}
+                                                    <button onClick={() => handleUpdatePremiumStatus(user.id, user.isPremium)} className={`p-2 rounded-lg transition-colors text-xs font-bold ${user.isPremium ? 'bg-slate-500 text-white hover:bg-slate-600' : 'bg-amber-500 text-white hover:bg-amber-600'}`} title={user.isPremium ? 'Revoke Premium' : 'Grant Premium'}>
+                                                        <Crown className="w-4 h-4" />
+                                                    </button>
+
+                                                    <button onClick={() => handleSuspendUser(user.id, user.suspended)} className={`p-2 rounded-lg transition-colors ${user.suspended ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`} title={user.suspended ? "Activate" : "Suspend"}>
+                                                        {user.suspended ? <CheckCircle className="w-4 h-4"/> : <Ban className="w-4 h-4"/>}
+                                                    </button>
+
+                                                    <button onClick={() => handleDeleteUser(user.id)} className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors" title="Delete User">
+                                                        <Trash2 className="w-4 h-4"/>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -443,39 +546,29 @@ export function AdminDashboard() {
                     </div>
                 )}
                 
-                {/* --- MESSAGES TAB --- */}
+                {/* --- MESSAGES, WORKOUTS, RECIPES, TIPS (Standard Logic) --- */}
                 {activeTab === 'messages' && (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {messages.length === 0 ? (
                             <div className="col-span-full text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                                <div className="p-4 bg-slate-50 rounded-full mb-4 inline-block">
-                                    <Mail className="w-8 h-8 text-slate-300" />
-                                </div>
-                                <p className="text-slate-500 font-medium text-lg">No new messages</p>
-                                <p className="text-slate-400 text-sm">Check back later for inquiries.</p>
+                                <Mail className="w-8 h-8 text-slate-300 mx-auto mb-4" />
+                                <p className="text-slate-500 font-medium">No new messages</p>
                             </div>
                         ) : messages.map(msg => (
-                            <div key={msg.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                            <div key={msg.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between h-full hover:shadow-lg transition-all duration-300 group">
                                 <div>
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                                {msg.name.charAt(0)}
-                                            </div>
+                                            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg">{msg.name?.charAt(0) || 'U'}</div>
                                             <div>
-                                                <h4 className="font-bold text-slate-900 text-base leading-tight">{msg.name}</h4>
+                                                <h4 className="font-bold text-slate-900 text-base">{msg.name}</h4>
                                                 <p className="text-xs text-slate-500 font-medium mt-0.5">{msg.email}</p>
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 uppercase tracking-wider">
-                                            {new Date(msg.dateSent).toLocaleDateString()}
-                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 uppercase tracking-wider">{new Date(msg.dateSent).toLocaleDateString()}</span>
                                     </div>
                                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6 relative">
-                                        <div className="absolute top-0 left-4 -mt-2 w-4 h-4 bg-slate-50 border-t border-l border-slate-100 transform rotate-45"></div>
-                                        <p className="text-slate-600 text-sm italic leading-relaxed">
-                                            "{msg.message}"
-                                        </p>
+                                        <p className="text-slate-600 text-sm italic leading-relaxed">"{msg.message}"</p>
                                     </div>
                                 </div>
                                 <div className="flex justify-end border-t border-slate-100 pt-4">
@@ -488,10 +581,9 @@ export function AdminDashboard() {
                     </div>
                 )}
 
-                {/* --- WORKOUTS & CONTENT TAB --- */}
+                {/* --- WORKOUTS TAB --- */}
                 {activeTab === 'workouts' && (
                     <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* FORM */}
                         <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-200 h-fit sticky top-6 lg:col-span-1">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-3">
@@ -499,9 +591,7 @@ export function AdminDashboard() {
                                     <h3 className="font-black text-xl text-slate-800">{isEditing ? 'Edit Workout' : 'Create Workout'}</h3>
                                 </div>
                                 {isEditing && (
-                                    <button onClick={resetForm} className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-lg">
-                                        <X className="w-3 h-3" /> Cancel
-                                    </button>
+                                    <button onClick={resetForm} className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-lg"><X className="w-3 h-3" /> Cancel</button>
                                 )}
                             </div>
                             <form onSubmit={handleSave} className="space-y-5">
@@ -531,119 +621,74 @@ export function AdminDashboard() {
                             </form>
                         </div>
 
-                        {/* LIST WITH FILTERS */}
                         <div className="lg:col-span-2 flex flex-col h-full">
-                            {/* FILTERS ROW */}
                             <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center sticky top-0 z-10">
-                                <div className="flex items-center gap-2 text-slate-500 text-sm font-bold uppercase tracking-wider">
-                                    <Filter className="w-4 h-4" /> Filters:
-                                </div>
+                                <div className="flex items-center gap-2 text-slate-500 text-sm font-bold uppercase tracking-wider"><Filter className="w-4 h-4" /> Filters:</div>
                                 <div className="flex gap-3">
-                                    <select 
-                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-slate-100 transition-colors"
-                                        value={workoutCategoryFilter}
-                                        onChange={(e) => setWorkoutCategoryFilter(e.target.value)}
-                                    >
+                                    <select className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none cursor-pointer" value={workoutCategoryFilter} onChange={(e) => setWorkoutCategoryFilter(e.target.value)}>
                                         <option value="ALL">All Categories</option>
                                         {WORKOUT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
-                                    <select 
-                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-slate-100 transition-colors"
-                                        value={workoutAccessFilter}
-                                        onChange={(e) => setWorkoutAccessFilter(e.target.value)}
-                                    >
+                                    <select className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none cursor-pointer" value={workoutAccessFilter} onChange={(e) => setWorkoutAccessFilter(e.target.value)}>
                                         <option value="ALL">All Tiers</option>
                                         <option value="FREE">Free</option>
                                         <option value="PREMIUM">Premium</option>
                                     </select>
                                 </div>
-                                <span className="ml-auto text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                    Showing {getFilteredContent('WORKOUT').length} Items
-                                </span >
                             </div>
 
-                            {/* SCROLLABLE LIST */}
                             <div className="space-y-6 overflow-y-auto max-h-[800px] pr-2 pb-20 custom-scrollbar">
                                 {getFilteredContent('WORKOUT').map(item => (
                                     <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex justify-between items-center hover:shadow-lg transition-all duration-300 group">
                                         <div className="flex gap-6 items-center">
-                                            <div className="bg-blue-50 p-4 rounded-2xl text-blue-600 shrink-0 border border-blue-100">
-                                                <Dumbbell className="w-8 h-8" />
-                                            </div>
+                                            <div className="bg-blue-50 p-4 rounded-2xl text-blue-600 shrink-0 border border-blue-100"><Dumbbell className="w-8 h-8" /></div>
                                             <div>
-                                                <div className="flex items-center gap-3 mb-1">
-                                                    <h4 className="font-bold text-lg text-slate-900">{item.title}</h4>
-                                                    <Badge label={item.category} color="slate" />
-                                                </div>
+                                                <div className="flex items-center gap-3 mb-1"><h4 className="font-bold text-lg text-slate-900">{item.title}</h4><Badge label={item.category} color="slate" /></div>
                                                 <div className="flex flex-wrap gap-3 mt-3">
                                                     <Badge label={`${item.sets || 3} Sets`} color="blue" />
                                                     <Badge label={`${item.reps || '12'} Reps`} color="blue" />
-                                                    <Badge label={`${item.restTimeSeconds || 60}s Rest`} color="blue" />
                                                     {item.accessLevel === 'PREMIUM' && <span className="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-amber-200 tracking-wide">PREMIUM</span>}
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <button onClick={() => handleEdit(item)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
-                                                <Pencil className="w-5 h-5"/>
-                                            </button>
-                                            <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
-                                                <Trash2 className="w-5 h-5"/>
-                                            </button>
+                                            <button onClick={() => handleEdit(item)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"><Pencil className="w-5 h-5"/></button>
+                                            <button onClick={() => handleDeleteContent(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>
                                         </div>
                                     </div>
                                 ))}
-                                {getFilteredContent('WORKOUT').length === 0 && (
-                                    <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-3xl">
-                                        <Dumbbell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                        <p className="text-slate-500 font-bold">No workouts match your filters.</p>
-                                        <button onClick={() => {setWorkoutCategoryFilter('ALL'); setWorkoutAccessFilter('ALL');}} className="text-blue-600 text-sm font-bold mt-2 hover:underline">Clear Filters</button>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* --- TIPS & RECIPES TAB (SEPARATED) --- */}
                 {/* --- RECIPES TAB --- */}
                 {activeTab === 'recipes' && (
                     <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">
                         <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-200 h-fit sticky top-6 lg:col-span-1">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800">
-                                    <div className="p-2 bg-green-100 text-green-600 rounded-xl"><Coffee className="w-6 h-6"/></div>
-                                    {isEditing ? 'Edit Recipe' : 'Add Recipe'}
-                                </h3>
+                                <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800"><div className="p-2 bg-green-100 text-green-600 rounded-xl"><Coffee className="w-6 h-6"/></div>{isEditing ? 'Edit Recipe' : 'Add Recipe'}</h3>
                                 {isEditing && <button onClick={resetForm} className="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg">Cancel</button>}
                             </div>
-                            
                             <form onSubmit={handleSave} className="space-y-5">
                                 <Input label="Recipe Title" val={newItem.title} set={v => setNewItem({...newItem, title: v})} />
-                                <Input label="YouTube Video URL" val={newItem.videoUrl} set={v => setNewItem({...newItem, videoUrl: v})} placeholder="youtube.com/watch?v=... or /shorts/..." />
-                                <TextArea label="Description / Instructions" val={newItem.description} set={v => setNewItem({...newItem, description: v})} />
-                                
+                                <Input label="Video URL" val={newItem.videoUrl} set={v => setNewItem({...newItem, videoUrl: v})} placeholder="youtube.com..." />
+                                <TextArea label="Description" val={newItem.description} set={v => setNewItem({...newItem, description: v})} />
                                 <div className="bg-green-50 p-4 rounded-xl border border-green-100 space-y-3">
-                                    <h4 className="text-xs font-bold text-green-700 uppercase tracking-wide flex items-center gap-2"><Flame className="w-3 h-3"/> Nutritional Info</h4>
+                                    <h4 className="text-xs font-bold text-green-700 uppercase tracking-wide flex items-center gap-2"><Flame className="w-3 h-3"/> Nutrition</h4>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <Input label="Calories (kcal)" type="number" val={nutrition.calories} set={v => setNutrition({...nutrition, calories: v})} placeholder="0" />
-                                        <Input label="Protein (g)" type="number" val={nutrition.protein} set={v => setNutrition({...nutrition, protein: v})} placeholder="0" />
-                                        <Input label="Fats (g)" type="number" val={nutrition.fats} set={v => setNutrition({...nutrition, fats: v})} placeholder="0" />
-                                        <Input label="Carbs (g)" type="number" val={nutrition.carbs} set={v => setNutrition({...nutrition, carbs: v})} placeholder="0" />
+                                        <Input label="Calories" type="number" val={nutrition.calories} set={v => setNutrition({...nutrition, calories: v})} />
+                                        <Input label="Protein" type="number" val={nutrition.protein} set={v => setNutrition({...nutrition, protein: v})} />
+                                        <Input label="Fats" type="number" val={nutrition.fats} set={v => setNutrition({...nutrition, fats: v})} />
+                                        <Input label="Carbs" type="number" val={nutrition.carbs} set={v => setNutrition({...nutrition, carbs: v})} />
                                     </div>
                                 </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Category</label>
-                                    <select className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-green-500 text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
-                                        <option value="">Select Category</option>
-                                        {RECIPE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </div>
+                                <select className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-green-500 text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                                    <option value="">Select Category</option>
+                                    {RECIPE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
                                 <Select label="Access" val={newItem.accessLevel} set={v => setNewItem({...newItem, accessLevel: v})} opts={['FREE','PREMIUM']} />
-                                <button className="w-full py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition-all active:scale-95 mt-4">
-                                    {isEditing ? 'Update Recipe' : 'Publish Recipe'}
-                                </button>
+                                <button className="w-full py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition-all active:scale-95 mt-4">{isEditing ? 'Update Recipe' : 'Publish Recipe'}</button>
                             </form>
                         </div>
                         
@@ -654,14 +699,12 @@ export function AdminDashboard() {
                                         <div className="p-4 rounded-2xl shrink-0 bg-green-50 text-green-600 border border-green-100"><Coffee className="w-8 h-8" /></div>
                                         <div>
                                             <h4 className="font-bold text-lg text-slate-900 mb-1">{item.title}</h4>
-                                            <div className="flex gap-2">
-                                                <Badge label={item.category} color="slate" />
-                                            </div>
+                                            <Badge label={item.category} color="slate" />
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
                                         <button onClick={() => handleEdit(item)} className="p-3 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all"><Pencil className="w-5 h-5"/></button>
-                                        <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>
+                                        <button onClick={() => handleDeleteContent(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>
                                     </div>
                                 </div>
                             ))}
@@ -669,67 +712,42 @@ export function AdminDashboard() {
                     </div>
                 )}
 
-                {/* --- STUDY TIPS TAB (SEPARATED & UPDATED) --- */}
+                {/* --- STUDY TIPS TAB --- */}
                 {activeTab === 'tips' && (
                     <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">
                         <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-200 h-fit sticky top-6 lg:col-span-1">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800">
-                                    <div className="p-2 bg-purple-100 text-purple-600 rounded-xl"><BookOpen className="w-6 h-6"/></div>
-                                    {isEditing ? 'Edit Tip' : 'Add Study Tip'}
-                                </h3>
+                                <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800"><div className="p-2 bg-purple-100 text-purple-600 rounded-xl"><BookOpen className="w-6 h-6"/></div>{isEditing ? 'Edit Tip' : 'Add Study Tip'}</h3>
                                 {isEditing && <button onClick={resetForm} className="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg">Cancel</button>}
                             </div>
-                            
                             <form onSubmit={handleSave} className="space-y-5">
                                 <Input label="Tip Title" val={newItem.title} set={v => setNewItem({...newItem, title: v})} />
-                                <Input label="YouTube Video URL" val={newItem.videoUrl} set={v => setNewItem({...newItem, videoUrl: v})} placeholder="youtube.com/watch?v=... or /shorts/..." />
-                                <TextArea label="Full Explanation (Blog Content)" val={newItem.description} set={v => setNewItem({...newItem, description: v})} />
-                                
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Category</label>
-                                    <select className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-purple-500 text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
-                                        <option value="">Select Category</option>
-                                        {STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </div>
+                                <Input label="Video URL" val={newItem.videoUrl} set={v => setNewItem({...newItem, videoUrl: v})} />
+                                <TextArea label="Content" val={newItem.description} set={v => setNewItem({...newItem, description: v})} />
+                                <select className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-purple-500 text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                                    <option value="">Select Category</option>
+                                    {STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
                                 <Select label="Access" val={newItem.accessLevel} set={v => setNewItem({...newItem, accessLevel: v})} opts={['FREE','PREMIUM']} />
-                                <button className="w-full py-4 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 transition-all active:scale-95 mt-4">
-                                    {isEditing ? 'Update Tip' : 'Publish Tip'}
-                                </button>
+                                <button className="w-full py-4 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 transition-all active:scale-95 mt-4">{isEditing ? 'Update Tip' : 'Publish Tip'}</button>
                             </form>
                         </div>
                         
                         <div className="lg:col-span-2 flex flex-col h-full">
-                            {/* TIPS FILTERS */}
                             <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center sticky top-0 z-10">
-                                <div className="flex items-center gap-2 text-slate-500 text-sm font-bold uppercase tracking-wider">
-                                    <Filter className="w-4 h-4" /> Filters:
-                                </div>
+                                <div className="flex items-center gap-2 text-slate-500 text-sm font-bold uppercase tracking-wider"><Filter className="w-4 h-4" /> Filters:</div>
                                 <div className="flex gap-3">
-                                    <select 
-                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
-                                        value={studyCategoryFilter}
-                                        onChange={(e) => setStudyCategoryFilter(e.target.value)}
-                                    >
+                                    <select className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none cursor-pointer" value={studyCategoryFilter} onChange={(e) => setStudyCategoryFilter(e.target.value)}>
                                         <option value="ALL">All Categories</option>
                                         {STUDY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
-                                    <select 
-                                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer hover:bg-slate-100 transition-colors"
-                                        value={studyAccessFilter}
-                                        onChange={(e) => setStudyAccessFilter(e.target.value)}
-                                    >
+                                    <select className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none cursor-pointer" value={studyAccessFilter} onChange={(e) => setStudyAccessFilter(e.target.value)}>
                                         <option value="ALL">All Tiers</option>
                                         <option value="FREE">Free</option>
                                         <option value="PREMIUM">Premium</option>
                                     </select>
                                 </div>
-                                <span className="ml-auto text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                    {getFilteredContent('STUDY_TIP').length} Items
-                                </span >
                             </div>
-
                             <div className="space-y-4 overflow-y-auto max-h-[800px] pr-2 pb-20 custom-scrollbar">
                                 {getFilteredContent('STUDY_TIP').map(item => (
                                     <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex justify-between items-center hover:shadow-lg transition-all group">
@@ -746,27 +764,20 @@ export function AdminDashboard() {
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={() => handleEdit(item)} className="p-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"><Pencil className="w-5 h-5"/></button>
-                                            <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>
+                                            <button onClick={() => handleDeleteContent(item.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5"/></button>
                                         </div>
                                     </div>
                                 ))}
-                                {getFilteredContent('STUDY_TIP').length === 0 && (
-                                    <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-3xl">
-                                        <p className="text-slate-500 font-bold">No tips found.</p>
-                                        <button onClick={() => {setStudyCategoryFilter('ALL'); setStudyAccessFilter('ALL');}} className="text-purple-600 text-sm font-bold mt-2 hover:underline">Clear Filters</button>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
                 )}
-
             </main>
         </div>
     );
 }
 
-// UI Helpers
+// UI HELPERS
 const NavBtn = ({ id, icon: Icon, label, active, set, badge }) => (
     <button onClick={() => set(id)} className={`flex items-center gap-3 w-full p-4 rounded-2xl transition-all font-bold text-sm group relative overflow-hidden ${active === id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
         <Icon className={`w-5 h-5 ${active === id ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} /> 
@@ -778,13 +789,9 @@ const NavBtn = ({ id, icon: Icon, label, active, set, badge }) => (
 
 const StatCard = ({ title, value, icon: Icon, color, trend }) => (
     <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-300 relative overflow-hidden group hover:-translate-y-1">
-        <div className={`absolute top-0 right-0 p-6 opacity-5 ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform duration-500`}>
-            <Icon className="w-28 h-28" />
-        </div>
+        <div className={`absolute top-0 right-0 p-6 opacity-5 ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform duration-500`}><Icon className="w-28 h-28" /></div>
         <div className="relative z-10">
-            <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center text-white mb-6 shadow-lg`}>
-                <Icon className="w-6 h-6" />
-            </div>
+            <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center text-white mb-6 shadow-lg`}><Icon className="w-6 h-6" /></div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</p>
             <h3 className="text-4xl font-black text-slate-900 tracking-tight">{value}</h3>
             {trend && <div className="flex items-center gap-1 mt-3 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg w-fit"><TrendingUp className="w-3 h-3"/> {trend}</div>}
@@ -813,9 +820,6 @@ const Select = ({ label, val, set, opts }) => (
             <select className="w-full px-5 py-3.5 border border-slate-200 rounded-xl outline-none bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-medium appearance-none cursor-pointer" value={val} onChange={e => set(e.target.value)}>
                 {opts.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
         </div>
     </div>
 );
