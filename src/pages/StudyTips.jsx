@@ -417,7 +417,7 @@ export function StudyTips() {
                     </div>
                  </div>
 
-                 <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
+                 <div className="flex gap-2 overflow-x-auto pb-4 mb-6 custom-scrollbar">
                     {CATEGORIES.map(cat => (
                         <button key={cat} onClick={() => setBuilderCategory(cat)} className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${builderCategory === cat ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}>
                             {cat}
@@ -497,7 +497,7 @@ export function StudyTips() {
         {customLists.length > 0 && (
             <div className="mb-14">
                 <h2 className="text-3xl font-black text-slate-900 mb-6 flex items-center gap-2"><Activity className="w-7 h-7 text-cyan-600"/> My Rituals</h2>
-                <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scroll-smooth no-scrollbar">
+                <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scroll-smooth custom-scrollbar">
                     {customLists.map(list => (
                         <div key={list.id} className="min-w-[280px] snap-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative group">
                             <h3 className="text-lg font-bold mb-1 line-clamp-1">{list.title}</h3>
@@ -513,7 +513,7 @@ export function StudyTips() {
         )}
 
         {/* CATEGORY FILTER */}
-        <div className="flex gap-3 overflow-x-auto pb-8 mb-6 no-scrollbar">
+        <div className="flex gap-3 overflow-x-auto pb-8 mb-6 custom-scrollbar">
             {CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-6 py-3 rounded-full text-sm font-black whitespace-nowrap transition-all shrink-0 ${selectedCategory === cat ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-300/50' : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-cyan-400 hover:text-cyan-600 hover:shadow-md'}`}>
                     {cat}

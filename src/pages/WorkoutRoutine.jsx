@@ -461,7 +461,7 @@ export function WorkoutRoutine() {
                      </div>
 
                      {/* BUILDER FILTER */}
-                     <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
+                     <div className="flex gap-2 overflow-x-auto pb-4 mb-6 custom-scrollbar">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat}
@@ -548,7 +548,7 @@ export function WorkoutRoutine() {
                 {customRoutines.length > 0 && (
                     <div className="mb-14">
                         <h2 className="text-3xl font-black text-slate-900 mb-6 flex items-center gap-2"><Activity className="w-7 h-7 text-blue-600"/> My Custom Routines</h2>
-                        <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scroll-smooth no-scrollbar">
+                        <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scroll-smooth custom-scrollbar">
                             {customRoutines.map(routine => (
                                 <div key={routine.id} className="min-w-[280px] snap-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative group">
                                     <h3 className="text-lg font-bold mb-1 line-clamp-1">{routine.title}</h3>
@@ -587,7 +587,7 @@ export function WorkoutRoutine() {
                     </div>
 
                     {/* CATEGORY FILTER */}
-                    <div className="flex gap-3 overflow-x-auto pb-8 no-scrollbar">
+                    <div className="flex gap-3 overflow-x-auto pb-8 custom-scrollbar">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat}

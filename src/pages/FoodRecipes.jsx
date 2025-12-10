@@ -322,7 +322,7 @@ export const FoodRecipes = () => {
         </div>
 
         {/* Filter */}
-        <div className="flex gap-3 overflow-x-auto pb-8 mb-6 no-scrollbar">
+        <div className="flex gap-3 overflow-x-auto pb-8 mb-6 custom-scrollbar">
             {CATEGORIES.map(cat => (
                 <button 
                     key={cat} 

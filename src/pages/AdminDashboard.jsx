@@ -189,7 +189,7 @@ export function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="space-y-8 flex-1 overflow-y-auto no-scrollbar">
+                <div className="space-y-8 flex-1 overflow-y-auto custom-scrollbar">
                     <div>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 px-4">Main Menu</p>
                         <nav className="space-y-1">

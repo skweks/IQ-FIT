@@ -1,0 +1,36 @@
+
+/* Custom scrollbar styling to match the app gradients */
+:root {
+	--scrollbar-track: #e2e8f0;
+	--scrollbar-thumb: linear-gradient(135deg, #22d3ee, #6366f1);
+}
+
+.custom-scrollbar {
+	scrollbar-width: thin;
+	scrollbar-color: #22d3ee var(--scrollbar-track);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: var(--scrollbar-track);
+	border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: var(--scrollbar-thumb);
+	border-radius: 9999px;
+	border: 2px solid var(--scrollbar-track);
+	box-shadow: 0 4px 10px rgba(34, 211, 238, 0.25);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(135deg, #0ea5e9, #4338ca);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+	background: transparent;
+}
