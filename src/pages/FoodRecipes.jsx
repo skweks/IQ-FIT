@@ -303,31 +303,31 @@ export const FoodRecipes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-6 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 py-12 px-6 font-sans">
       <div className="max-w-7xl mx-auto">
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 transition-colors mb-10 font-bold bg-white px-4 py-2 rounded-full w-fit shadow-sm border border-slate-200 hover:shadow-md"
+          className="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-all mb-10 font-bold bg-white px-5 py-2.5 rounded-full w-fit shadow-md border border-slate-200 hover:shadow-lg hover:-translate-y-0.5"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </button>
         
         {/* Header */}
-        <div className="mb-12 text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center justify-center p-3 bg-emerald-100 text-emerald-600 rounded-2xl mb-4 shadow-sm">
-             <UtensilsCrossed className="w-8 h-8" />
+        <div className="mb-16 text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center justify-center p-4 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl mb-5 shadow-lg shadow-emerald-500/30">
+             <UtensilsCrossed className="w-10 h-10" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Nutrition Kitchen</h1>
-          <p className="text-lg text-slate-500 leading-relaxed">Fuel your body with chef-curated, macro-friendly recipes.</p>
+          <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-5 tracking-tight leading-tight">Nutrition Kitchen</h1>
+          <p className="text-xl text-slate-600 leading-relaxed font-semibold">Fuel your body with chef-curated, macro-friendly recipes.</p>
         </div>
 
         {/* Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-6 mb-4 no-scrollbar justify-center">
+        <div className="flex gap-3 overflow-x-auto pb-8 mb-6 no-scrollbar">
             {CATEGORIES.map(cat => (
                 <button 
                     key={cat} 
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${selectedCategory === cat ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-200 hover:text-emerald-600'}`}
+                    className={`px-6 py-3 rounded-full text-sm font-black whitespace-nowrap transition-all shrink-0 ${selectedCategory === cat ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-300/50' : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-emerald-400 hover:text-emerald-600 hover:shadow-md'}`}
                 >
                     {cat}
                 </button>
@@ -360,10 +360,10 @@ export const FoodRecipes = () => {
                     </div>
                     
                     <div className="p-8 flex flex-col flex-grow">
-                      <h3 className="text-xl font-black text-slate-900 mb-2 leading-tight group-hover:text-emerald-600 transition-colors">{recipe.title}</h3>
-                      <p className="text-slate-500 text-sm mb-6 line-clamp-2">{recipe.description}</p>
+                      <h3 className="text-2xl font-black text-slate-900 mb-3 leading-tight group-hover:text-emerald-600 transition-colors">{recipe.title}</h3>
+                      <p className="text-slate-600 text-base mb-6 line-clamp-2 font-medium leading-relaxed">{recipe.description}</p>
                       
-                      <div className="mt-auto flex items-center gap-4 text-xs font-bold text-slate-400">
+                      <div className="mt-auto flex items-center gap-4 text-sm font-bold text-slate-500">
                          <span className="flex items-center gap-1"><Flame className="w-3 h-3 text-orange-500"/> {cals} kcal</span>
                          <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3 text-blue-500"/> {protein}g Protein</span>
                       </div>

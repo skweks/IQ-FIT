@@ -248,7 +248,6 @@ export function AdminDashboard() {
                             <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-bold text-lg text-slate-800">Recent Activity</h3>
-                                    <button className="text-sm text-blue-600 font-bold hover:underline">View All</button>
                                 </div>
                                 <div className="space-y-4">
                                     {payments.length === 0 ? (

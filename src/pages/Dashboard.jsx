@@ -249,13 +249,13 @@ export function Dashboard() {
       {/* --- HERO SECTION --- */}
       <section id="home" className="pt-32 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center mb-12 space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wide mb-4 shadow-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wide mb-4">
             <Zap className="w-3 h-3 fill-current" /> Your Daily Progress Hub
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight">
-            Welcome back, <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">{user?.fullName?.split(' ')[0]}</span>
+            Welcome back, <span className="text-blue-600">{user?.fullName?.split(' ')[0]}</span>
           </h1>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Track your fitness, sharpen your mind, and fuel your body. Your personalized holistic journey continues here.
           </p>
         </div>
@@ -353,15 +353,15 @@ export function Dashboard() {
                 <button 
                     key={card.title}
                     onClick={() => navigate(card.path)}
-                    className={`relative bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-left transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${card.border} group overflow-hidden`}
+                    className={`relative bg-white p-8 rounded-3xl shadow-md border-2 border-slate-200 text-left transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${card.border} group overflow-hidden`}
                 >
-                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br ${card.gradient} -mr-10 -mt-10 opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                    <div className={`w-14 h-14 rounded-2xl ${card.bg} flex items-center justify-center mb-6 relative z-10 group-hover:scale-110 transition-transform duration-300`}>
+                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br ${card.gradient} -mr-10 -mt-10 opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
+                    <div className={`w-14 h-14 rounded-2xl ${card.bg} flex items-center justify-center mb-6 relative z-10 group-hover:scale-110 transition-transform duration-300 border border-slate-200`}>
                         <card.icon className={`w-7 h-7 ${card.color}`} />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2 relative z-10">{card.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed relative z-10 pr-4">{card.desc}</p>
-                    <div className="mt-6 flex items-center text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-800 transition-colors relative z-10">
+                    <p className="text-slate-600 text-sm leading-relaxed relative z-10 pr-4">{card.desc}</p>
+                    <div className="mt-6 flex items-center text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-slate-900 transition-colors relative z-10">
                         Explore <ChevronRight className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />
                     </div>
                 </button>
@@ -373,11 +373,11 @@ export function Dashboard() {
       <section id="features" className="py-20 bg-white border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-center mb-16">
-             <div className="p-3 bg-blue-50 rounded-2xl mb-4 text-blue-600">
+             <div className="p-3 bg-blue-100 rounded-2xl mb-4 text-blue-600 border border-blue-200">
                 <Activity className="w-8 h-8" />
              </div>
              <h2 className="text-3xl md:text-4xl font-black text-slate-900 text-center">Your Lifetime Stats</h2>
-             <p className="text-slate-500 mt-4 text-center max-w-lg">Tracking your consistency since Day 1. Every session counts towards your goal.</p>
+             <p className="text-slate-600 mt-4 text-center max-w-lg">Tracking your consistency since Day 1. Every session counts towards your goal.</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
@@ -414,11 +414,11 @@ export function Dashboard() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
             <div>
-                <div className="flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">
+                <div className="flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-wider mb-4">
                     <TrendingUp className="w-4 h-4" /> Our Mission
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6 leading-tight">Balance Your Body and Mind with IQ-FIT</h2>
-                <p className="text-lg text-slate-600 leading-relaxed">
+                <p className="text-base text-slate-600 leading-relaxed">
                 We believe that true health is a balance of body and mind. IQ-FIT was built by a dedicated team to help you nurture physical strength while sharpening your intellectual acuity.
                 </p>
             </div>
@@ -472,9 +472,9 @@ export function Dashboard() {
       <section id="contact" className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">Get in Touch</h2>
-          <p className="text-slate-500 mb-12">Have questions or suggestions? We'd love to hear from you.</p>
+          <p className="text-slate-600 mb-12">Have questions or suggestions? We'd love to hear from you.</p>
           
-          <div className="bg-slate-50 p-8 md:p-12 rounded-3xl border border-slate-100 text-left">
+          <div className="bg-slate-50 p-8 md:p-12 rounded-3xl border border-slate-200 text-left">
             <form className="space-y-6" onSubmit={handleSendMessage}>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>

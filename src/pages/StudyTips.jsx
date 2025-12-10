@@ -448,33 +448,41 @@ export function StudyTips() {
 
   // --- MAIN VIEW ---
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-purple-50 py-12 px-6 font-sans">
       <div className="max-w-7xl mx-auto">
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors mb-8 font-medium"
+          className="flex items-center gap-2 text-slate-700 hover:text-cyan-600 transition-all mb-10 font-bold bg-white px-5 py-2.5 rounded-full w-fit shadow-md border border-slate-200 hover:shadow-lg hover:-translate-y-0.5"
         >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Dashboard
+          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </button>
 
+        {/* Header */}
+        <div className="mb-16 text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center justify-center p-4 bg-gradient-to-br from-cyan-500 to-blue-600 text-white rounded-2xl mb-5 shadow-lg shadow-cyan-500/30">
+             <Brain className="w-10 h-10" />
+          </div>
+          <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-5 tracking-tight leading-tight">Study Techniques</h1>
+          <p className="text-xl text-slate-600 leading-relaxed font-semibold">Master proven methods to boost focus, retention, and productivity.</p>
+        </div>
+
         {/* MINI DASHBOARD */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <div className="flex items-center gap-3 mb-1">
-                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Trophy className="w-5 h-5" /></div>
-                    <p className="text-sm font-bold text-slate-500 uppercase">Sessions Done</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-12">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-[2rem] shadow-lg border border-blue-400/20 text-white hover:shadow-xl transition-all hover:-translate-y-1">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-lg"><Trophy className="w-5 h-5" /></div>
+                    <p className="text-xs font-black uppercase tracking-wider opacity-90">Sessions Done</p>
                 </div>
-                <p className="text-2xl font-black text-slate-800">{totalCompleted}</p>
+                <p className="text-4xl font-black">{totalCompleted}</p>
             </div>
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <div className="flex items-center gap-3 mb-1">
-                    <div className="p-2 bg-violet-100 text-violet-600 rounded-lg"><Brain className="w-5 h-5" /></div>
-                    <p className="text-sm font-bold text-slate-500 uppercase">Focus Minutes</p>
+            <div className="bg-gradient-to-br from-violet-500 to-purple-600 p-6 rounded-[2rem] shadow-lg border border-violet-400/20 text-white hover:shadow-xl transition-all hover:-translate-y-1">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-lg"><Brain className="w-5 h-5" /></div>
+                    <p className="text-xs font-black uppercase tracking-wider opacity-90">Focus Minutes</p>
                 </div>
-                <p className="text-2xl font-black text-slate-800">{focusMinutes} <span className="text-xs font-medium text-slate-400">min</span></p>
+                <p className="text-4xl font-black">{focusMinutes} <span className="text-base font-bold opacity-80">min</span></p>
             </div>
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 md:col-span-2 flex items-center justify-between px-8 hover:shadow-md transition-shadow cursor-pointer group" onClick={handleCreateClick}>
+            <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-cyan-200 md:col-span-2 flex items-center justify-between px-8 hover:shadow-xl hover:border-cyan-300 transition-all cursor-pointer group hover:-translate-y-1" onClick={handleCreateClick}>
                  <div>
                     <h3 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-cyan-600 transition-colors">Create Study Ritual</h3>
                     <p className="text-slate-500 text-sm">Combine techniques for max efficiency.</p>
@@ -487,11 +495,11 @@ export function StudyTips() {
 
         {/* CUSTOM LISTS SCROLL */}
         {customLists.length > 0 && (
-            <div className="mb-12">
-                <h2 className="text-2xl font-black text-slate-900 mb-4 flex items-center gap-2"><Activity className="w-6 h-6 text-cyan-600"/> My Rituals</h2>
-                <div className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scroll-smooth no-scrollbar">
+            <div className="mb-14">
+                <h2 className="text-3xl font-black text-slate-900 mb-6 flex items-center gap-2"><Activity className="w-7 h-7 text-cyan-600"/> My Rituals</h2>
+                <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scroll-smooth no-scrollbar">
                     {customLists.map(list => (
-                        <div key={list.id} className="min-w-[280px] snap-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative group">
+                        <div key={list.id} className="min-w-[280px] snap-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative group">
                             <h3 className="text-lg font-bold mb-1 line-clamp-1">{list.title}</h3>
                             <p className="text-slate-400 text-xs mb-6 font-medium uppercase tracking-wider">{list.tips.length} Techniques</p>
                             <div className="flex gap-2">
@@ -504,31 +512,20 @@ export function StudyTips() {
             </div>
         )}
 
-        <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-            <div>
-                <h1 className="text-4xl font-bold text-slate-900 mb-2">Technique Library</h1>
-                <p className="text-slate-600">Select a method to start your focus session.</p>
-            </div>
-            {user?.isPremium && (
-                <div className="px-4 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-bold flex items-center gap-2 border border-amber-200">
-                    <Target className="w-4 h-4" /> Premium Access
-                </div>
-            )}
-        </div>
-
         {/* CATEGORY FILTER */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
+        <div className="flex gap-3 overflow-x-auto pb-8 mb-6 no-scrollbar">
             {CATEGORIES.map(cat => (
-                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedCategory === cat ? 'bg-cyan-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
+                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-6 py-3 rounded-full text-sm font-black whitespace-nowrap transition-all shrink-0 ${selectedCategory === cat ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-300/50' : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-cyan-400 hover:text-cyan-600 hover:shadow-md'}`}>
                     {cat}
                 </button>
             ))}
         </div>
         
+        {/* Tips Grid */}
         {loading ? (
-            <div className="text-center py-20 text-slate-400">Loading tips...</div>
+            <div className="text-center py-32 text-slate-400 animate-pulse">Loading tips...</div>
         ) : (
-            <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scroll-smooth no-scrollbar">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredTips.map((tip) => {
                 const isCompleted = completedIds.includes(tip.id);
                 // Parse benefits safely
@@ -541,54 +538,42 @@ export function StudyTips() {
                 return (
                 <div
                     key={tip.id}
-                    className={`min-w-[320px] snap-center bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-xl transition-all p-6 group flex flex-col h-full ${isCompleted ? 'border-green-200 ring-2 ring-green-100' : 'border-slate-100'}`}
+                    className={`bg-white rounded-[2rem] shadow-sm border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full cursor-pointer ${isCompleted ? 'border-green-200 ring-2 ring-green-100' : 'border-slate-100'}`}
+                    onClick={() => handleStart(tip)}
                 >
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="bg-gradient-to-br from-cyan-500 to-blue-500 p-3 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/20">
-                            <Brain className="w-6 h-6 text-white" />
-                        </div>
-                        
+                    <div className="h-48 bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center relative overflow-hidden">
+                        <Brain className="w-16 h-16 text-white opacity-80 group-hover:scale-110 transition-transform duration-700" />
                         {tip.accessLevel === 'PREMIUM' && !user?.isPremium && (
-                             <div className="bg-slate-900 text-white px-2 py-1 rounded text-[10px] font-bold flex gap-1"><Lock className="w-3 h-3"/> PREMIUM</div>
+                            <div className="absolute top-4 right-4 bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-white shadow-lg flex items-center gap-1"><Lock className="w-3 h-3"/> PREMIUM</div>
                         )}
                         {isCompleted && (
-                             <div className="bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold flex gap-1"><Check className="w-3 h-3"/> DONE</div>
+                            <div className="absolute top-4 right-4 bg-green-500/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-white shadow-lg flex items-center gap-1"><Check className="w-3 h-3"/> DONE</div>
                         )}
                     </div>
                     
-                    <div className="flex flex-col flex-grow">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">{tip.title}</h3>
-                        <p className="text-slate-500 text-sm mb-4 leading-relaxed line-clamp-2">{tip.description}</p>
+                    <div className="p-8 flex flex-col flex-grow">
+                        <h3 className="text-2xl font-black text-slate-900 mb-3 leading-tight group-hover:text-cyan-600 transition-colors">{tip.title}</h3>
+                        <p className="text-slate-600 text-base mb-6 line-clamp-2 font-medium leading-relaxed">{tip.description}</p>
                         
-                        <div className="border-t border-slate-100 pt-4 mt-auto mb-4">
-                            <ul className="space-y-1">
+                        <div className="mt-auto flex flex-col gap-2.5 text-sm font-bold text-slate-500">
                             {benefits.slice(0, 2).map((benefit, index) => (
-                                <li key={index} className="text-xs text-slate-600 flex items-center gap-2 font-medium">
-                                <div className="w-1 h-1 bg-cyan-500 rounded-full"></div>
-                                {benefit}
-                                </li>
+                                <span key={index} className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full shrink-0"></div>
+                                    <span className="line-clamp-1">{benefit}</span>
+                                </span>
                             ))}
-                            </ul>
                         </div>
-                        
-                        <button
-                            className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 
-                                ${tip.accessLevel === 'PREMIUM' && !user?.isPremium ? 'bg-slate-800' : isCompleted ? 'bg-green-600' : 'bg-cyan-600 hover:bg-cyan-700'}
-                            `}
-                            onClick={() => handleStart(tip)}
-                        >
-                            {tip.accessLevel === 'PREMIUM' && !user?.isPremium ? <><Lock className="w-4 h-4"/> Unlock</> : isCompleted ? <><Check className="w-4 h-4"/> Review</> : <><Play className="w-4 h-4"/> Start Session</>}
-                        </button>
                     </div>
                 </div>
                 );
             })}
             {filteredTips.length === 0 && (
-                 <div className="w-full text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 flex flex-col items-center justify-center min-w-[300px]">
-                    <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500 font-medium">No tips found for "{selectedCategory}"</p>
-                    <button onClick={() => setSelectedCategory('ALL')} className="text-cyan-600 font-bold text-sm mt-2 hover:underline">View All</button>
-                </div>
+                 <div className="col-span-full py-20 text-center">
+                    <div className="inline-block p-6 bg-slate-50 rounded-full mb-4"><BookOpen className="w-12 h-12 text-slate-300" /></div>
+                    <h3 className="text-lg font-bold text-slate-900">No Tips Found</h3>
+                    <p className="text-slate-500 mb-6">Try selecting a different category.</p>
+                    <button onClick={() => setSelectedCategory('ALL')} className="text-cyan-600 font-bold hover:underline">View All Tips</button>
+                 </div>
             )}
             </div>
         )}

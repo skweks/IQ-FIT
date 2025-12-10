@@ -502,29 +502,38 @@ export function WorkoutRoutine() {
 
     // --- MAIN VIEW ---
     return (
-        <div className="min-h-screen bg-slate-50 py-12 px-6">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-6 font-sans">
             <div className="max-w-7xl mx-auto">
-                <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-slate-600 hover:text-blue-600 mb-8 font-medium">
-                    <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+                <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-slate-700 hover:text-blue-600 transition-all mb-10 font-bold bg-white px-5 py-2.5 rounded-full w-fit shadow-md border border-slate-200 hover:shadow-lg hover:-translate-y-0.5">
+                    <ArrowLeft className="w-4 h-4" /> Back to Dashboard
                 </button>
 
+                {/* Header */}
+                <div className="mb-16 text-center max-w-2xl mx-auto">
+                  <div className="inline-flex items-center justify-center p-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl mb-5 shadow-lg shadow-blue-500/30">
+                     <Dumbbell className="w-10 h-10" />
+                  </div>
+                  <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-5 tracking-tight leading-tight">Workout Library</h1>
+                  <p className="text-xl text-slate-600 leading-relaxed font-semibold">Transform your body with expert-designed exercise routines.</p>
+                </div>
+
                 {/* MINI DASHBOARD (Stats) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-3 mb-1">
-                            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Trophy className="w-5 h-5" /></div>
-                            <p className="text-sm font-bold text-slate-500 uppercase">Today's Completed</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-12">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-[2rem] shadow-lg border border-blue-400/20 text-white hover:shadow-xl transition-all hover:-translate-y-1">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-lg"><Trophy className="w-5 h-5" /></div>
+                            <p className="text-xs font-black uppercase tracking-wider opacity-90">Today's Completed</p>
                         </div>
-                        <p className="text-2xl font-black text-slate-800">{totalCompleted} <span className="text-xs font-medium text-slate-400">Sessions</span></p>
+                        <p className="text-4xl font-black">{totalCompleted} <span className="text-base font-bold opacity-80">Sessions</span></p>
                     </div>
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-3 mb-1">
-                            <div className="p-2 bg-orange-100 text-orange-600 rounded-lg"><Flame className="w-5 h-5" /></div>
-                            <p className="text-sm font-bold text-slate-500 uppercase">Today's Burned</p>
+                    <div className="bg-gradient-to-br from-orange-500 to-red-600 p-6 rounded-[2rem] shadow-lg border border-orange-400/20 text-white hover:shadow-xl transition-all hover:-translate-y-1">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-lg"><Flame className="w-5 h-5" /></div>
+                            <p className="text-xs font-black uppercase tracking-wider opacity-90">Today's Burned</p>
                         </div>
-                        <p className="text-2xl font-black text-slate-800">{estimatedCalories} <span className="text-xs font-medium text-slate-400">Kcal</span></p>
+                        <p className="text-4xl font-black">{estimatedCalories} <span className="text-base font-bold opacity-80">Kcal</span></p>
                     </div>
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 md:col-span-2 flex items-center justify-between px-8 hover:shadow-md transition-shadow cursor-pointer group" onClick={handleCreateRoutineClick}>
+                    <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-blue-200 md:col-span-2 flex items-center justify-between px-8 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer group hover:-translate-y-1" onClick={handleCreateRoutineClick}>
                          <div>
                             <h3 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-blue-600 transition-colors">Custom Routines</h3>
                             <p className="text-slate-500 text-sm">Build your perfect workout plan.</p>
@@ -537,11 +546,11 @@ export function WorkoutRoutine() {
 
                 {/* CUSTOM ROUTINES SCROLL */}
                 {customRoutines.length > 0 && (
-                    <div className="mb-12">
-                        <h2 className="text-2xl font-black text-slate-900 mb-4 flex items-center gap-2"><Activity className="w-6 h-6 text-blue-600"/> My Custom Routines</h2>
-                        <div className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scroll-smooth no-scrollbar">
+                    <div className="mb-14">
+                        <h2 className="text-3xl font-black text-slate-900 mb-6 flex items-center gap-2"><Activity className="w-7 h-7 text-blue-600"/> My Custom Routines</h2>
+                        <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scroll-smooth no-scrollbar">
                             {customRoutines.map(routine => (
-                                <div key={routine.id} className="min-w-[280px] snap-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative group">
+                                <div key={routine.id} className="min-w-[280px] snap-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative group">
                                     <h3 className="text-lg font-bold mb-1 line-clamp-1">{routine.title}</h3>
                                     <p className="text-slate-400 text-xs mb-6 font-medium uppercase tracking-wider">{routine.exercises.length} Exercises</p>
                                     <div className="flex gap-2">
@@ -558,30 +567,18 @@ export function WorkoutRoutine() {
                     </div>
                 )}
 
-                <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-                    <div>
-                        <h1 className="text-4xl font-bold text-slate-900 mb-2">Exercise Library</h1>
-                        <p className="text-slate-600">Pick individual exercises or filter by body part.</p>
-                    </div>
-                    {user?.isPremium && (
-                        <div className="px-4 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-bold flex items-center gap-2 border border-amber-200">
-                            <Target className="w-4 h-4" /> Premium Access Unlocked
-                        </div>
-                    )}
-                </div>
-
                 {/* CONTROLS: Status Filter + Category Tabs */}
                 <div className="space-y-4 mb-8">
                     {/* STATUS TOGGLE */}
-                    <div className="flex bg-slate-200 p-1 rounded-xl w-fit">
+                    <div className="flex bg-white p-1.5 rounded-full w-fit shadow-md border border-slate-200">
                         {['ALL', 'COMPLETED', 'INCOMPLETE'].map(status => (
                             <button
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
                                     statusFilter === status 
-                                    ? 'bg-white text-slate-900 shadow-sm' 
-                                    : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' 
+                                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'
                                 }`}
                             >
                                 {status === 'ALL' ? 'All' : status === 'COMPLETED' ? 'Done' : 'To Do'}
@@ -590,15 +587,15 @@ export function WorkoutRoutine() {
                     </div>
 
                     {/* CATEGORY FILTER */}
-                    <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+                    <div className="flex gap-3 overflow-x-auto pb-8 no-scrollbar">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                                className={`px-6 py-3 rounded-full text-sm font-black whitespace-nowrap transition-all shrink-0 ${
                                     selectedCategory === cat 
-                                    ? 'bg-blue-600 text-white shadow-md' 
-                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-300/50' 
+                                    : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-blue-400 hover:text-blue-600 hover:shadow-md'
                                 }`}
                             >
                                 {cat}
@@ -607,12 +604,12 @@ export function WorkoutRoutine() {
                     </div>
                 </div>
                 
-                {loading ? <div className="text-center py-20 text-slate-400">Loading library...</div> : (
-                    <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scroll-smooth no-scrollbar">
+                {loading ? <div className="text-center py-32 text-slate-400 animate-pulse">Loading library...</div> : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredWorkouts.length > 0 ? filteredWorkouts.map(w => {
                             const isCompleted = completedIds.includes(w.id);
                             return (
-                                <div key={w.id} className={`min-w-[300px] md:min-w-[350px] snap-center bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-xl transition-all group flex flex-col ${isCompleted ? 'border-green-200 ring-2 ring-green-100' : 'border-slate-100'}`}>
+                                <div key={w.id} className={`bg-white rounded-[2rem] shadow-sm border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full ${isCompleted ? 'border-green-200 ring-2 ring-green-100' : 'border-slate-100'}`}>
                                     <div className="h-48 bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center relative overflow-hidden">
                                         {w.videoUrl ? (
                                             <>
@@ -655,10 +652,11 @@ export function WorkoutRoutine() {
                                 </div>
                             );
                         }) : (
-                            <div className="w-full text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 flex flex-col items-center justify-center min-w-[300px]">
-                                <Dumbbell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                <p className="text-slate-500 font-medium">No exercises found for "{selectedCategory}"</p>
-                                <button onClick={() => setSelectedCategory('ALL')} className="text-blue-600 font-bold text-sm mt-2 hover:underline">View All</button>
+                            <div className="col-span-full py-20 text-center">
+                                <div className="inline-block p-6 bg-slate-50 rounded-full mb-4"><Dumbbell className="w-12 h-12 text-slate-300" /></div>
+                                <h3 className="text-lg font-bold text-slate-900">No Exercises Found</h3>
+                                <p className="text-slate-500 mb-6">Try selecting a different category or filter.</p>
+                                <button onClick={() => setSelectedCategory('ALL')} className="text-blue-600 font-bold hover:underline">View All Exercises</button>
                             </div>
                         )}
                     </div>
