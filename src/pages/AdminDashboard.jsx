@@ -363,12 +363,7 @@ export function AdminDashboard() {
                         <p className="text-slate-500 font-medium">Manage your platform efficiently.</p>
                     </div>
                     <div className="hidden md:flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
-                            <Search className="w-5 h-5" />
-                        </div>
-                        <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-200">
-                            A
-                        </div>
+
                     </div>
                 </header>
 
@@ -518,7 +513,7 @@ export function AdminDashboard() {
                                                 )}
                                             </td>
                                             <td className="p-5 pr-8 text-right">
-                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex justify-end gap-2 opacity-0 opacity-100 transition-opacity">
                                                     {/* PROMOTION BUTTON (Role Toggle) */}
                                                     <button onClick={() => handleUpdateUserRole(user.id, user.role)} className={`p-2 rounded-lg transition-colors text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-500 text-white hover:bg-purple-600' : 'bg-red-500 text-white hover:bg-red-600'}`} title={user.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin'}>
                                                         <Shield className="w-4 h-4" />
