@@ -3,15 +3,14 @@ import {
   Dumbbell, Home, Sparkles, Info, Mail, User, LogOut, Menu, X, Brain, 
   UtensilsCrossed, ArrowRight, Crown, Trophy, Calendar, Activity, 
   ChevronRight, Zap, TrendingUp, Award, Heart, Code, Database, Server, 
-  Send, CheckCircle, Globe, Phone,
-  Shield // 1. Import Shield icon
+  Send, CheckCircle, Globe, Phone, Shield, Check
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '../hooks/useNavigate';
 
 export function Dashboard() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const { user, logout } = useAuth(); // Removed 'stats' from context, we use local state here
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   // --- DB STATS STATE ---
@@ -32,10 +31,13 @@ export function Dashboard() {
         }));
 
         // FETCH REAL LIFETIME STATS FROM DATABASE
-        fetch(`http://localhost:8080/api/users/${user.id}/stats`)
-            .then(res => res.json())
-            .then(data => setDbStats(data))
-            .catch(err => console.error("Failed to load stats", err));
+        // Ensure user.id exists before fetching to avoid errors
+        if (user.id) {
+            fetch(`http://localhost:8080/api/users/${user.id}/stats`)
+                .then(res => res.json())
+                .then(data => setDbStats(data))
+                .catch(err => console.error("Failed to load stats", err));
+        }
     }
   }, [user]);
 
@@ -260,7 +262,7 @@ export function Dashboard() {
           </p>
         </div>
 
-        {/* 2. ADMIN DASHBOARD LINK (NEW BLOCK FOR ADMINS ONLY) */}
+        {/* --- ADMIN DASHBOARD LINK (VISIBLE ONLY TO ADMINS) --- */}
         {user?.role === 'ADMIN' && (
             <div className="max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
                 <div className="bg-white p-4 rounded-3xl shadow-xl shadow-red-900/5 border border-red-200 hover:shadow-2xl transition-shadow">
@@ -285,7 +287,7 @@ export function Dashboard() {
             </div>
         )}
 
-        {/* Active Session Card */}
+        {/* Active Session Card */}   
         {activePath && (
             <div className="max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
                 <div className="bg-white p-1 rounded-3xl shadow-xl shadow-blue-900/5 border border-slate-200 hover:shadow-2xl transition-shadow">
@@ -408,7 +410,77 @@ export function Dashboard() {
           </div>
         </div>
       </section>
-      
+       <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-white relative">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-20">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">Everything You Need to Succeed</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto text-lg">We don't just track reps. We help you build a lifestyle that balances physical power with mental clarity.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="group relative bg-slate-50 rounded-[2.5rem] p-8 hover:bg-blue-50 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl border border-slate-100 overflow-hidden">
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 bg-blue-100/50 rounded-full group-hover:scale-150 transition-transform duration-700 blur-2xl"></div>
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center mb-8 text-blue-600 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                  <Dumbbell className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-700 transition-colors">Smart Workouts</h3>
+                <p className="text-slate-600 leading-relaxed mb-8">
+                  Access a library of routines from HIIT to Yoga. Track sets, reps, and rest times with our interactive player.
+                </p>
+                <ul className="space-y-3">
+                  {['Beginner to Advanced', 'Video Guides', 'Progress Tracking'].map(item => (
+                    <li key={item} className="flex items-center gap-3 text-sm font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                      <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><Check className="w-3 h-3" /></div> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="group relative bg-slate-50 rounded-[2.5rem] p-8 hover:bg-cyan-50 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl border border-slate-100 overflow-hidden">
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 bg-cyan-100/50 rounded-full group-hover:scale-150 transition-transform duration-700 blur-2xl"></div>
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center mb-8 text-cyan-600 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
+                  <Brain className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-cyan-700 transition-colors">Cognitive Performance</h3>
+                <p className="text-slate-600 leading-relaxed mb-8">
+                  Sharpen your focus with study techniques like Pomodoro. A healthy body needs a sharp mind.
+                </p>
+                <ul className="space-y-3">
+                  {['Focus Timers', 'Memory Hacks', 'Productivity Tips'].map(item => (
+                    <li key={item} className="flex items-center gap-3 text-sm font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                      <div className="w-5 h-5 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600"><Check className="w-3 h-3" /></div> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="group relative bg-slate-50 rounded-[2.5rem] p-8 hover:bg-emerald-50 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl border border-slate-100 overflow-hidden">
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 bg-emerald-100/50 rounded-full group-hover:scale-150 transition-transform duration-700 blur-2xl"></div>
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center mb-8 text-emerald-600 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                  <UtensilsCrossed className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-emerald-700 transition-colors">Nutritional Fuel</h3>
+                <p className="text-slate-600 leading-relaxed mb-8">
+                  Discover simple, high-protein recipes designed to fuel your workouts and recovery.
+                </p>
+                <ul className="space-y-3">
+                  {['Macro-friendly', 'Quick Prep', 'Shopping Lists'].map(item => (
+                    <li key={item} className="flex items-center gap-3 text-sm font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><Check className="w-3 h-3" /></div> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* --- ABOUT SECTION --- */}
       <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
