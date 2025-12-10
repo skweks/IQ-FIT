@@ -287,7 +287,7 @@ export function Dashboard() {
             </div>
         )}
 
-        {/* Active Session Card */}
+        {/* Active Session Card */}   
         {activePath && (
             <div className="max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
                 <div className="bg-white p-1 rounded-3xl shadow-xl shadow-blue-900/5 border border-slate-200 hover:shadow-2xl transition-shadow">
