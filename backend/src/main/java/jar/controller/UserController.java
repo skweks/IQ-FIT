@@ -39,24 +39,6 @@ public class UserController {
         if (user == null) return ResponseEntity.status(401).body("User not found");
         if (user.getPassword().equals(loginRequest.getPassword())) return ResponseEntity.ok(user);
         else return ResponseEntity.status(401).body("Invalid email or password");
-
-        if (user == null) {
-            System.out.println("❌ User NOT found in database.");
-            return ResponseEntity.status(401).body("User not found");
-        }
-
-        // DEBUG: Check passwords
-        // System.out.println(" DB Password: " + user.getPassword()); // Uncomment for
-        // debugging
-
-        // Check if user exists AND if the password matches
-        if (user.getPassword().equals(loginRequest.getPassword())) {
-            System.out.println("✅ Password Matches! Login Success.");
-            return ResponseEntity.ok(user); // Success: Return the user
-        } else {
-            System.out.println("❌ Password Mismatch.");
-            return ResponseEntity.status(401).body("Invalid email or password"); // Failure
-        }
     }
 
     @DeleteMapping("/{id}")
@@ -73,7 +55,6 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -113,6 +94,8 @@ public class UserController {
         stats.put("recipesTried", recipes);
         
         return ResponseEntity.ok(stats);
+    }
+
     @PutMapping("/{id}/role")
     public ResponseEntity<User> updateRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
         String newRole = request.get("role");
