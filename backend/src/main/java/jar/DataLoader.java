@@ -9,7 +9,6 @@ import jar.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -23,9 +22,6 @@ public class DataLoader implements CommandLineRunner {
 
     @Autowired
     private PlanRepository planRepository;
-
-    @Autowired // <-- Inject the BCrypt function
-    private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -49,7 +45,7 @@ public class DataLoader implements CommandLineRunner {
 
         // --- 2. Load Membership Plans (UPDATED) ---
         if (planRepository.count() == 0) {
-
+            
             // Free Plan (Optional: helps if you want a default subscription)
             Plan free = new Plan();
             free.setPlanName("Free Starter");
@@ -73,7 +69,7 @@ public class DataLoader implements CommandLineRunner {
             yearly.setPrice(99.99); // Significant discount logic
             yearly.setDurationDays(365);
             planRepository.save(yearly);
-
+            
             System.out.println("✅ Plans loaded into database!");
         }
 
@@ -82,13 +78,12 @@ public class DataLoader implements CommandLineRunner {
             User admin = new User();
             admin.setFullName("Admin User");
             admin.setEmail("admin@iqfit.com");
-            // CRITICAL FIX: Hash the password here
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword("admin123");
             admin.setRole("ADMIN");
             userRepository.save(admin);
             System.out.println("✅ ADMIN Account loaded");
         }
-
+        
         System.out.println("🚀 Application is ready!");
     }
 }

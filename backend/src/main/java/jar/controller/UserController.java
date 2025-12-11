@@ -3,7 +3,6 @@ package jar.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jar.model.User;
 import jar.repository.UserRepository;
@@ -24,9 +23,6 @@ public class UserController {
     @Autowired
     private ActivityLogRepository activityLogRepository;
 
-    @Autowired // <-- Inject the BCrypt function
-    private PasswordEncoder passwordEncoder;
-
     @GetMapping
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -34,22 +30,18 @@ public class UserController {
 
     @PostMapping
     public User createUser(@RequestBody User user) {
-        // CRITICAL FIX: Hash the password before saving a new user
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail());
-
+        
         if (user == null) {
-            return ResponseEntity.status(401).body("Invalid email or password");
+            return ResponseEntity.status(401).body("User not found");
         }
 
-        // CRITICAL FIX: Use BCryptPasswordEncoder.matches() for secure comparison.
-        // .matches() compares the raw string with the hash.
-        if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+        if (user.getPassword().equals(loginRequest.getPassword())) {
             return ResponseEntity.ok(user);
         } else {
             return ResponseEntity.status(401).body("Invalid email or password");
@@ -68,31 +60,23 @@ public class UserController {
         return userRepository.save(user);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userRepository.findById(id)
-                .map(ResponseEntity::ok) // Return 200 OK if found
-                .orElse(ResponseEntity.notFound().build()); // Return 404 Not Found if not found
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        return userRepository.findById(id).map(user -> {
-            user.setFullName(userDetails.getFullName());
-            user.setEmail(userDetails.getEmail());
-            user.setGender(userDetails.getGender());
-            user.setDateOfBirth(userDetails.getDateOfBirth());
-            user.setBio(userDetails.getBio());
-            user.setWeight(userDetails.getWeight());
-            user.setHeight(userDetails.getHeight());
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-            if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
-                // CRITICAL FIX: Hash new password before saving it
-                user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
-            }
-            User updatedUser = userRepository.save(user);
-            return ResponseEntity.ok(updatedUser);
-        }).orElse(ResponseEntity.notFound().build()); // Return 404 if user not found
+        user.setFullName(userDetails.getFullName());
+        user.setEmail(userDetails.getEmail());
+        user.setGender(userDetails.getGender());
+        user.setDateOfBirth(userDetails.getDateOfBirth());
+        user.setBio(userDetails.getBio());
+        user.setWeight(userDetails.getWeight());
+        user.setHeight(userDetails.getHeight());
+        
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+            user.setPassword(userDetails.getPassword());
+        }
+        User updatedUser = userRepository.save(user);
+        return ResponseEntity.ok(updatedUser);
     }
 
     // --- MANAGE SUBSCRIPTION STATUS (Cancel/Upgrade via Query Param) ---
@@ -114,7 +98,7 @@ public class UserController {
         stats.put("workouts", workouts);
         stats.put("studySessions", study);
         stats.put("recipesTried", recipes);
-
+        
         return ResponseEntity.ok(stats);
     } // <--- THIS BRACE WAS MISSING IN YOUR CODE
 
