@@ -102,8 +102,8 @@ export function AdminDashboard() {
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('iqfit_user'));
-        if (!user || user.role !== 'ADMIN') {
-            navigate('/dashboard'); 
+        if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+            navigate('/dashboard');
             return;
         }
         fetchData();
@@ -226,16 +226,22 @@ export function AdminDashboard() {
             type: 'info',
             onConfirm: async () => {
                 try {
-                    const res = await fetch(`${API_URL}/users/${userId}/role`, {
+                    const actor = JSON.parse(localStorage.getItem('iqfit_user')) || {};
+                    const actorId = actor.id;
+                    if (!actorId) throw new Error('No actorId found');
+                    const res = await fetch(`${API_URL}/users/${userId}/role?actorId=${actorId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ role: newRole })
                     });
-                    if (!res.ok) throw new Error();
+                    if (!res.ok) {
+                        const msg = await res.text();
+                        throw new Error(msg || 'Failed to update role');
+                    }
                     fetchData();
                     showToast(`User role updated to ${newRole}.`, 'success');
                 } catch (e) {
-                    showToast("Failed to update role. Check server console.", 'error');
+                    showToast(e.message || 'Failed to update role.', 'error');
                 }
             }
         });
@@ -519,8 +525,18 @@ export function AdminDashboard() {
                                             </td>
                                             <td className="p-5 pr-8 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {/* PROMOTION BUTTON (Role Toggle) */}
-                                                    <button onClick={() => handleUpdateUserRole(user.id, user.role)} className={`p-2 rounded-lg transition-colors text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-500 text-white hover:bg-purple-600' : 'bg-red-500 text-white hover:bg-red-600'}`} title={user.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin'}>
+                                                    <button
+                                                        onClick={() => handleUpdateUserRole(user.id, user.role)}
+                                                        disabled={user.role === 'SUPER_ADMIN'}
+                                                        className={`p-2 rounded-lg transition-colors text-xs font-bold ${
+                                                            user.role === 'SUPER_ADMIN'
+                                                                ? 'bg-slate-300 text-slate-600 cursor-not-allowed opacity-50'
+                                                                : user.role === 'ADMIN'
+                                                                    ? 'bg-purple-500 text-white hover:bg-purple-600'
+                                                                    : 'bg-red-500 text-white hover:bg-red-600'
+                                                        }`}
+                                                        title={user.role === 'SUPER_ADMIN' ? 'SUPER_ADMIN role is locked' : (user.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin')}
+                                                    >
                                                         <Shield className="w-4 h-4" />
                                                     </button>
                                                     

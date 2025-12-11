@@ -45,7 +45,7 @@ public class DataLoader implements CommandLineRunner {
 
         // --- 2. Load Membership Plans (UPDATED) ---
         if (planRepository.count() == 0) {
-            
+
             // Free Plan (Optional: helps if you want a default subscription)
             Plan free = new Plan();
             free.setPlanName("Free Starter");
@@ -69,21 +69,13 @@ public class DataLoader implements CommandLineRunner {
             yearly.setPrice(99.99); // Significant discount logic
             yearly.setDurationDays(365);
             planRepository.save(yearly);
-            
+
             System.out.println("✅ Plans loaded into database!");
         }
 
         // --- 3. Load Users ---
-        if (userRepository.findByEmail("admin@iqfit.com") == null) {
-            User admin = new User();
-            admin.setFullName("Admin User");
-            admin.setEmail("admin@iqfit.com");
-            admin.setPassword("admin123");
-            admin.setRole("ADMIN");
-            userRepository.save(admin);
-            System.out.println("✅ ADMIN Account loaded");
-        }
-        
+        // Removed hard-coded admin seeding. First registered user becomes SUPER_ADMIN.
+
         System.out.println("🚀 Application is ready!");
     }
 }

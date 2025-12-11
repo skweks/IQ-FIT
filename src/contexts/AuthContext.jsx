@@ -26,9 +26,23 @@ export const AuthProvider = ({ children }) => {
 
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        fetch(`http://localhost:8080/api/users/${parsed.id}`)
+          .then(res => {
+            if (!res.ok) throw new Error('User not found');
+            return res.json();
+          })
+          .then(serverUser => {
+            setUser(serverUser);
+            localStorage.setItem('iqfit_user', JSON.stringify(serverUser));
+          })
+          .catch(() => {
+            localStorage.removeItem('iqfit_user');
+            setUser(null);
+          });
       } catch (e) {
         console.error("Failed to parse user data", e);
+        localStorage.removeItem('iqfit_user');
       }
     }
     
@@ -76,7 +90,8 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       console.error("Login failed:", error);
-      // Re-throw the error so the UI (LoginPage) can handle it
+      localStorage.removeItem('iqfit_user');
+      setUser(null);
       throw error; 
     } finally {
       setIsLoading(false);

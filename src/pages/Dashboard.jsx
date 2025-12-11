@@ -218,6 +218,9 @@ export function Dashboard() {
                         { label: 'Workout Routine', icon: Dumbbell, path: '/workouts', color: 'text-cyan-600', bg: 'bg-cyan-50' },
                         { label: 'Study Tips', icon: Brain, path: '/study-tips', color: 'text-violet-600', bg: 'bg-violet-50' },
                         { label: 'Food Recipes', icon: UtensilsCrossed, path: '/recipes', color: 'text-orange-600', bg: 'bg-orange-50' },
+                        ...(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' ? [
+                          { label: 'Admin Panel', icon: Crown, path: '/admin', color: 'text-amber-600', bg: 'bg-amber-50' }
+                        ] : [])
                     ].map((item) => (
                         <button 
                             key={item.path}
@@ -263,7 +266,7 @@ export function Dashboard() {
         </div>
 
         {/* --- ADMIN DASHBOARD LINK (VISIBLE ONLY TO ADMINS) --- */}
-        {user?.role === 'ADMIN' && (
+        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
             <div className="max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
                 <div className="bg-white p-4 rounded-3xl shadow-xl shadow-red-900/5 border border-red-200 hover:shadow-2xl transition-shadow">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -350,7 +353,17 @@ export function Dashboard() {
                     border: 'hover:border-orange-200',
                     path: '/recipes',
                     gradient: 'from-orange-500 to-amber-500'
-                }
+                },
+                ...((user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? [{
+                    title: 'Admin Panel',
+                    desc: 'Manage users, content, payments, and messages.',
+                    icon: Crown,
+                    color: 'text-amber-600',
+                    bg: 'bg-amber-50',
+                    border: 'hover:border-amber-200',
+                    path: '/admin',
+                    gradient: 'from-amber-500 to-yellow-500'
+                }] : [])
             ].map((card) => (
                 <button 
                     key={card.title}

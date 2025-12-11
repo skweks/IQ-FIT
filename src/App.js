@@ -59,7 +59,7 @@ function AppContent() {
       return user ? <FoodRecipes /> : <LoginPage />;
     // 2. Add this case inside the switch(currentPath) block:
     case '/admin':
-      return user?.role === 'ADMIN' ? <AdminDashboard /> : <Dashboard />;
+      return (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? <AdminDashboard /> : <Dashboard />;
       
     // 2. Add the new Case for Plans here
     case '/plans':
